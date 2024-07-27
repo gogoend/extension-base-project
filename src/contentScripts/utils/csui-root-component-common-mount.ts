@@ -14,8 +14,9 @@ export default async function csuiRootComponentCommonMount<T extends Component>(
   })
 
   // mount component to context window
-  const container = document.createElement('div')
+  const container = document.createElement('gogoend-ui')
   container.id = __NAME__
+  container.style.display = 'block'
   const root = document.createElement('div')
   const styleEl = document.createElement('link')
   const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? 'open' : 'closed' }) || container

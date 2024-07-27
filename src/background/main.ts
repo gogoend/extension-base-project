@@ -1,5 +1,6 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
+import { messageHandlerMap } from './message-handler'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -47,7 +48,11 @@ browser.tabs.onActivated.addListener(async ({ tabId }) => {
 
   // eslint-disable-next-line no-console
   console.log('previous tab', tab)
-  sendMessage('tab-prev', { title: tab.title }, { context: 'content-script', tabId })
+  sendMessage(
+    'tab-prev',
+    { title: tab.title },
+    { context: 'content-script', tabId },
+  )
 })
 
 onMessage('get-current-tab', async () => {
@@ -62,4 +67,10 @@ onMessage('get-current-tab', async () => {
       title: undefined,
     }
   }
+})
+
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (typeof messageHandlerMap[message.messageType] !== 'function')
+    return
+  return messageHandlerMap[message.messageType](message, sender, sendResponse)
 })
