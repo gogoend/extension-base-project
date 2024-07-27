@@ -2,6 +2,7 @@ import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import { messageHandlerMap } from './message-handler'
 import { ContentScriptAliveDetectMessage } from '~/type/worker-message'
+import { isForbiddenUrl } from '~/env'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -90,13 +91,11 @@ function installScript(tab: any) {
   }
 }
 browser.tabs.onActivated.addListener(async (tab) => {
-  console.warn(tab)
   try {
-    const res = await browser.tabs.sendMessage(
+    await browser.tabs.sendMessage(
       tab.tabId,
       new ContentScriptAliveDetectMessage(),
     )
-    console.warn(res)
   }
   catch (err) {
     console.error(err)
@@ -104,7 +103,10 @@ browser.tabs.onActivated.addListener(async (tab) => {
       err.message.includes(
         'Could not establish connection. Receiving end does not exist.',
       )
-    )
-      installScript(tab)
+    ) {
+      const targetTab = (await browser.tabs.query({})).find(it => it.id === tab.tabId)
+      if (targetTab && targetTab.url && !isForbiddenUrl(targetTab.url))
+        installScript(tab)
+    }
   }
 })
