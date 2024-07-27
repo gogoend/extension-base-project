@@ -32,4 +32,11 @@ export default async function csuiRootComponentCommonMount<T extends Component>(
   const app = createApp(RootComponent)
   setupApp(app)
   app.mount(root)
+  const dispose = () => {
+    app.unmount()
+    container.remove()
+  }
+  return {
+    dispose,
+  }
 }
