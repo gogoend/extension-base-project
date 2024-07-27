@@ -1,6 +1,7 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import { messageHandlerMap } from './message-handler'
+import { ContentScriptAliveDetectMessage } from '~/type/worker-message'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -73,4 +74,37 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (typeof messageHandlerMap[message.messageType] !== 'function')
     return
   return messageHandlerMap[message.messageType](message, sender, sendResponse)
+})
+
+function installScript(tab: any) {
+  let { content_scripts } = browser.runtime.getManifest()
+  content_scripts = content_scripts ?? []
+  for (const cs of content_scripts) {
+    const jsArr = cs.js
+    browser.scripting.executeScript({
+      target: {
+        tabId: tab.tabId,
+      },
+      files: jsArr,
+    })
+  }
+}
+browser.tabs.onActivated.addListener(async (tab) => {
+  console.warn(tab)
+  try {
+    const res = await browser.tabs.sendMessage(
+      tab.tabId,
+      new ContentScriptAliveDetectMessage(),
+    )
+    console.warn(res)
+  }
+  catch (err) {
+    console.error(err)
+    if (
+      err.message.includes(
+        'Could not establish connection. Receiving end does not exist.',
+      )
+    )
+      installScript(tab)
+  }
 })

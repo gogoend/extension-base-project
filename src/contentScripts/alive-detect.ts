@@ -15,3 +15,8 @@ window.addEventListener('focus', async function handler() {
     throw err
   }
 })
+
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.messageType === 'ContentScriptAliveDetectMessage')
+    sendResponse()
+})
