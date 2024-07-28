@@ -4,7 +4,11 @@ import type { Component } from 'vue'
 import { createApp } from 'vue'
 import { setupApp } from '~/logic/common-setup'
 
-export default async function csuiRootComponentCommonMount<T extends Component>(RootComponent: T) {
+function defaultContainerMounter(containerEl: Element) {
+  document.body.appendChild(containerEl)
+}
+
+export default async function csuiRootComponentCommonMount<T extends Component>(RootComponent: T, mounter = defaultContainerMounter) {
   // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
   console.info('[vitesse-webext] Hello world from content script')
 
@@ -24,15 +28,24 @@ export default async function csuiRootComponentCommonMount<T extends Component>(
   styleEl.setAttribute('href', browser.runtime.getURL('dist/contentScripts/style.css'))
   shadowDOM.appendChild(styleEl)
   shadowDOM.appendChild(root)
-  document.body.appendChild(container)
-
+  mounter(container)
   const styleElLoadWaitee = Promise.withResolvers()
   styleEl.addEventListener('load', () => styleElLoadWaitee.resolve(undefined), { once: true })
   await styleElLoadWaitee.promise
   const app = createApp(RootComponent)
   setupApp(app)
   app.mount(root)
+  let periodCheckTimer = window.setTimeout(periodCheckIfNodeOnScreen, 1000)
+  function periodCheckIfNodeOnScreen() {
+    if (
+      !container.ownerDocument.contains(container)
+    )
+      mounter(container)
+
+    periodCheckTimer = window.setTimeout(periodCheckIfNodeOnScreen, 1000)
+  }
   const dispose = () => {
+    window.clearTimeout(periodCheckTimer)
     app.unmount()
     container.remove()
   }
