@@ -90,6 +90,8 @@ function installScript(tab: any) {
     })
   }
 }
+
+const installedTabIdSet = new Set<number>()
 browser.tabs.onActivated.addListener(async (tab) => {
   try {
     await browser.tabs.sendMessage(
@@ -105,8 +107,10 @@ browser.tabs.onActivated.addListener(async (tab) => {
       )
     ) {
       const targetTab = (await browser.tabs.query({})).find(it => it.id === tab.tabId)
-      if (targetTab && targetTab.url && !isForbiddenUrl(targetTab.url))
+      if (targetTab && targetTab.status === 'complete' && targetTab.url && !isForbiddenUrl(targetTab.url) && !installedTabIdSet.has(tab.tabId)) {
         installScript(tab)
+        installedTabIdSet.add(tab.tabId)
+      }
     }
   }
 })
