@@ -4,11 +4,14 @@ import type { Component } from 'vue'
 import { createApp } from 'vue'
 import { setupApp } from '~/logic/common-setup'
 
-function defaultContainerMounter(containerEl: Element) {
-  document.body.appendChild(containerEl)
+const defaultMountConfig = {
+  mounter: (containerEl: Element) => {
+    document.documentElement.appendChild(containerEl)
+  },
+  reuseOldElOnAnchorChange: true,
 }
 
-export default async function csuiRootComponentCommonMount<T extends Component>(RootComponent: T, mounter = defaultContainerMounter) {
+async function commonMount<T extends Component>(RootComponent: T, mountConfig = defaultMountConfig) {
   // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
   console.info('[vitesse-webext] Hello world from content script')
 
@@ -28,6 +31,8 @@ export default async function csuiRootComponentCommonMount<T extends Component>(
   styleEl.setAttribute('href', browser.runtime.getURL('dist/contentScripts/style.css'))
   shadowDOM.appendChild(styleEl)
   shadowDOM.appendChild(root)
+
+  const { mounter } = mountConfig
   mounter(container)
   const styleElLoadWaitee = Promise.withResolvers()
   styleEl.addEventListener('load', () => styleElLoadWaitee.resolve(undefined), { once: true })
@@ -35,19 +40,54 @@ export default async function csuiRootComponentCommonMount<T extends Component>(
   const app = createApp(RootComponent)
   setupApp(app)
   app.mount(root)
-  let periodCheckTimer = window.setTimeout(periodCheckIfNodeOnScreen, 1000)
-  function periodCheckIfNodeOnScreen() {
-    if (
-      !container.ownerDocument.contains(container)
-    )
-      mounter(container)
-
-    periodCheckTimer = window.setTimeout(periodCheckIfNodeOnScreen, 1000)
-  }
   const dispose = () => {
-    window.clearTimeout(periodCheckTimer)
     app.unmount()
     container.remove()
+  }
+
+  return {
+    container,
+    dispose,
+  }
+}
+
+export default async function csuiRootComponentCommonMount<T extends Component>(RootComponent: T, specifiedMountConfig: Partial<typeof defaultMountConfig> = defaultMountConfig) {
+  const mountConfig = {
+    ...defaultMountConfig,
+    ...specifiedMountConfig,
+  }
+  const { reuseOldElOnAnchorChange } = mountConfig
+  let mountResult: Awaited<ReturnType<typeof commonMount>> | undefined
+
+  let encounterErrorWhenMount = false
+
+  let periodCheckTimer: number
+  periodCheckIfNodeOnScreen()
+
+  const dispose = () => {
+    window.clearTimeout(periodCheckTimer)
+    mountResult?.dispose()
+  }
+  async function periodCheckIfNodeOnScreen() {
+    try {
+      if (
+        !mountResult || !mountResult.container.ownerDocument.contains(mountResult.container)
+      ) {
+        if (!reuseOldElOnAnchorChange || encounterErrorWhenMount || !mountResult) {
+          mountResult?.dispose()
+          mountResult = await commonMount(RootComponent, mountConfig)
+          encounterErrorWhenMount = false
+        }
+        else {
+          mountConfig.mounter(mountResult!.container)
+        }
+      }
+    }
+    catch (err) {
+      console.error('挂载过程发生错误', err)
+      encounterErrorWhenMount = true
+    }
+    periodCheckTimer = window.setTimeout(periodCheckIfNodeOnScreen, 1000)
   }
   return {
     dispose,
