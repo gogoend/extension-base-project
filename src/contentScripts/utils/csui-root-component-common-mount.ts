@@ -51,7 +51,7 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   }
 }
 
-export default async function csuiRootComponentCommonMount<T extends Component>(RootComponent: T, specifiedMountConfig: Partial<typeof defaultMountConfig> = defaultMountConfig) {
+export default async function mountSingletonCsui<T extends Component>(RootComponent: T, specifiedMountConfig: Partial<typeof defaultMountConfig> = defaultMountConfig) {
   const mountConfig = {
     ...defaultMountConfig,
     ...specifiedMountConfig,
