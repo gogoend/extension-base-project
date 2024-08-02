@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import 'uno.css'
+import request from '../../utils/request'
 
+const r = ref()
 onMounted(() => {
-  console.warn(1)
+  request.get('https://qq.com').then((res) => {
+    // debugger
+    r.value = res
+  })
 })
 </script>
 
@@ -11,7 +16,7 @@ onMounted(() => {
     123456789<br>
     123456789<br>
     123456789<br>
-    123456789
+    <div>{{ r }}</div>
   </div>
 </template>
 

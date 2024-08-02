@@ -1,3 +1,5 @@
+import type { AxiosRequestConfig } from 'axios'
+
 export abstract class WorkerBaseMessage {
   public abstract messageType: string
 }
@@ -16,4 +18,18 @@ export class WorkerAliveDetectMessage extends WorkerBaseMessage {
 export class ContentScriptAliveDetectMessage extends WorkerBaseMessage {
   static tag = 'ContentScriptAliveDetectMessage' as const
   public messageType: string = 'ContentScriptAliveDetectMessage'
+}
+
+/**
+ * 请求发送request
+ */
+export class WorkerRequestMessage extends WorkerBaseMessage {
+  public messageType: string = 'WorkerRequestMessage'
+  public static tag = 'WorkerRequestMessage'
+  public axiosConf: AxiosRequestConfig
+
+  public constructor(axiosConf: AxiosRequestConfig) {
+    super()
+    this.axiosConf = axiosConf
+  }
 }
