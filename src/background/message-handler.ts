@@ -5,7 +5,7 @@ export const messageHandlerMap: Record<string, Parameters<typeof browser.runtime
     sendResponse()
     return true
   },
-  [WorkerRequestMessage.tag](message: WorkerRequestMessage, sender, sendResponse) {
+  [WorkerRequestMessage.tag](message: WorkerRequestMessage) {
     let {
       url,
       method,
@@ -23,16 +23,17 @@ export const messageHandlerMap: Record<string, Parameters<typeof browser.runtime
       body: data,
     })
 
-    fetch(request).then(async (res) => {
+    return fetch(request).then(async (res) => {
       const responseBody = await res.text()
       // console.log(res)
-      sendResponse({
+      return {
         data: responseBody,
         headers: Object.fromEntries(res.headers.entries()),
         status: res.status,
         statusText: res.statusText,
-      })
+        config: message.axiosConf,
+        request,
+      }
     })
-    return true
   },
 }
