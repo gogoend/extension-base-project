@@ -7,19 +7,21 @@ const [show, toggle] = useToggle(false)
 
 <template>
   <div class="fixed right-0 bottom-0 m-5 z-100 flex items-end font-sans select-none leading-1em">
-    23213123131
-    <div
-      class="bg-white text-gray-800 rounded-lg shadow w-max h-min"
-      p="x-4 y-2"
-      m="y-auto r-2"
-      transition="opacity duration-300"
-      :class="show ? 'opacity-100' : 'opacity-0'"
-    >
-      <h1 class="text-lg">
-        Vitesse WebExtee
-      </h1>
-      <SharedSubtitle />
-    </div>
+    <Transition name="popup">
+      <div
+        v-if="show"
+        class="popup bg-white text-gray-800 rounded-lg shadow w-max h-min"
+        p="x-4 y-2"
+        m="y-auto r-2"
+        transition="opacity duration-300"
+      >
+        <h1 class="text-lg">
+          Vitesse WebExtee
+        </h1>
+        <SharedSubtitle />
+        <img src="../../assets/google-doodle.png">
+      </div>
+    </Transition>
     <button
       class="flex w-10 h-10 rounded-full shadow cursor-pointer border-none"
       bg="teal-600 hover:teal-700"
@@ -31,8 +33,10 @@ const [show, toggle] = useToggle(false)
 </template>
 
 <style scoped>
+.popup-enter-from,
+.popup-leave-to {
+  opacity: 0;
+}
 button {
-  align-self: start;
-
 }
 </style>

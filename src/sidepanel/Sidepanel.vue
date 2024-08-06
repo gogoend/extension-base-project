@@ -11,7 +11,7 @@ function openOptionsPage() {
     <Logo />
     <div>Sidepanel</div>
     <SharedSubtitle />
-
+    <img src="../assets/google-doodle.png">
     <button class="btn mt-2" @click="openOptionsPage">
       Open Options
     </button>
