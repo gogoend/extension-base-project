@@ -4,19 +4,15 @@ import request from '../../utils/request'
 
 const r = ref()
 onMounted(() => {
-  request.get('https://qq.com').then((res) => {
-    // debugger
-    r.value = res
+  request.get('https://example.com').then((res) => {
+    r.value = res.data
   })
 })
 </script>
 
 <template>
   <div class="search-engine-insertion">
-    123456789<br>
-    123456789<br>
-    123456789<br>
-    <div>{{ r }}</div>
+    <div v-html="r" />
   </div>
 </template>
 
