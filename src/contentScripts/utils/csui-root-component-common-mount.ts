@@ -9,6 +9,7 @@ const defaultMountConfig = {
     document.documentElement.appendChild(containerEl)
   },
   reuseOldElOnAnchorChange: true,
+  use: [] as any[],
 }
 
 async function commonMount<T extends Component>(RootComponent: T, mountConfig = defaultMountConfig) {
@@ -32,12 +33,17 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   shadowDOM.appendChild(styleEl)
   shadowDOM.appendChild(root)
 
-  const { mounter } = mountConfig
+  const { mounter, use } = mountConfig
   mounter(container)
   const styleElLoadWaitee = Promise.withResolvers()
   styleEl.addEventListener('load', () => styleElLoadWaitee.resolve(undefined), { once: true })
   await styleElLoadWaitee.promise
   const app = createApp(RootComponent)
+
+  use?.forEach((it) => {
+    app.use(it)
+  })
+
   setupApp(app)
   app.mount(root)
   const dispose = () => {
