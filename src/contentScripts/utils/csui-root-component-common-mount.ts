@@ -2,6 +2,7 @@
 import { onMessage } from 'webext-bridge/content-script'
 import type { Component } from 'vue'
 import { createApp } from 'vue'
+import { mittBus } from './mittBus'
 import { setupApp } from '~/logic/common-setup'
 
 const defaultMountConfig = {
@@ -45,7 +46,16 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   })
 
   setupApp(app)
-  app.mount(root)
+  try {
+    app.mount(root)
+  }
+  catch (err) {
+    console.error('根组件挂载发生错误', err)
+    mittBus.emit('root-mount-error', {
+      component: RootComponent,
+    })
+    return
+  }
   const dispose = () => {
     app.unmount()
     container.remove()
@@ -70,11 +80,21 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
   let periodCheckTimer: number
   periodCheckIfNodeOnScreen()
 
-  const dispose = () => {
+  function dispose() {
     window.clearTimeout(periodCheckTimer)
     mountResult?.dispose()
+    mittBus.off('root-mount-error', rootMountErrorHandler)
   }
+
+  function rootMountErrorHandler({ component }: { component: Component }) {
+    if (RootComponent !== component)
+      return
+
+    dispose()
+  }
+  mittBus.on('root-mount-error', rootMountErrorHandler)
   async function periodCheckIfNodeOnScreen() {
+    periodCheckTimer = window.setTimeout(periodCheckIfNodeOnScreen, 1000)
     try {
       if (
         !mountResult || !mountResult.container.ownerDocument.contains(mountResult.container)
@@ -93,7 +113,6 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
       console.error('挂载过程发生错误', err)
       encounterErrorWhenMount = true
     }
-    periodCheckTimer = window.setTimeout(periodCheckIfNodeOnScreen, 1000)
   }
   return {
     dispose,
