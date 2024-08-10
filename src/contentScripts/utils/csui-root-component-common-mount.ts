@@ -42,7 +42,13 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   const app = createApp(RootComponent)
 
   use?.forEach((it) => {
-    app.use(it)
+    if (Array.isArray(it)) {
+      const [plugin, options] = it
+      app.use(plugin, options)
+    }
+    else {
+      app.use(it)
+    }
   })
 
   setupApp(app)

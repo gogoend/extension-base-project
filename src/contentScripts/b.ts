@@ -1,4 +1,5 @@
 import ElementPlus from 'element-plus'
+import VueDOMPurifyHTML from 'vue-dompurify-html'
 import App from './views/App2.vue'
 import mountSingletonCsui from './utils/csui-root-component-common-mount'
 import { mittBus } from './utils/mittBus'
@@ -21,6 +22,13 @@ import 'element-plus/dist/index.css'
     reuseOldElOnAnchorChange: false,
     use: [
       ElementPlus,
+      [
+        VueDOMPurifyHTML,
+        {
+          FORBID_TAGS: ['style', 'head', 'title', 'body', 'script'],
+          FORBID_ATTR: ['style'],
+        },
+      ],
     ],
   })
   mittBus.on('extension-background-destroyed', dispose)
