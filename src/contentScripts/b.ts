@@ -6,7 +6,7 @@ import { mittBus } from './utils/mittBus'
 /**
  * element-ui的按需引入需要引入base.css文件
  */
-import 'element-plus/theme-chalk/base.css'
+import 'element-plus/dist/index.css'
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (async () => {

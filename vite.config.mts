@@ -9,6 +9,7 @@ import IconsResolver from 'unplugin-icons/resolver'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import UnoCSS from 'unocss/vite'
+import Replace from 'unplugin-replace/vite'
 import { isDev, port, r } from './scripts/utils'
 import packageJson from './package.json'
 
@@ -56,6 +57,17 @@ export const sharedConfig: UserConfig = {
 
     // https://github.com/unocss/unocss
     UnoCSS(),
+    Replace({
+      delimiters: ['', ''],
+      sourcemap: true,
+      include: ['**/node_modules/element-plus/**/*.css', '**/node_modules/element-plus/**/*.scss'],
+      values: [
+        {
+          find: /(:root)/g,
+          replacement: ':host',
+        },
+      ],
+    }),
 
     // rewrite assets to use relative path
     {
