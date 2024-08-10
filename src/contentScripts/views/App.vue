@@ -6,16 +6,16 @@ const [show, toggle] = useToggle(false)
 </script>
 
 <template>
-  <div class="fixed right-0 bottom-0 m-5 z-100 flex items-end font-sans select-none leading-1em">
+  <div class="fixed right-0 bottom-0 m-50px z-100 flex items-end font-sans line-height-16px">
     <Transition name="popup">
       <div
         v-if="show"
-        class="popup bg-white text-gray-800 rounded-lg shadow w-max h-min"
-        p="x-4 y-2"
-        m="y-auto r-2"
+        class="popup bg-white text-gray-800 rounded-20px shadow w-max h-min"
+        p="x-40px y-20px"
+        m="y-auto r-20px"
         transition="opacity duration-300"
       >
-        <h1 class="text-lg">
+        <h1 class="text-16px">
           Vitesse WebExtee
         </h1>
         <SharedSubtitle />
@@ -23,11 +23,11 @@ const [show, toggle] = useToggle(false)
       </div>
     </Transition>
     <button
-      class="flex w-10 h-10 rounded-full shadow cursor-pointer border-none"
+      class="flex w-60px h-60px rounded-full shadow cursor-pointer border-none"
       bg="teal-600 hover:teal-700"
       @click="toggle()"
     >
-      <pixelarticons-power class="block m-auto text-white text-lg" />
+      <pixelarticons-power class="block m-auto text-white text-24px" />
     </button>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <template>
-  <p class="mt-2 opacity-50">
+  <p class="mt-2px opacity-50 text-16px">
     This is the {{ $app.context }} page
   </p>
 </template>
