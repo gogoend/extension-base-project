@@ -27,6 +27,7 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   container.id = __NAME__
   container.style.display = 'block'
   const root = document.createElement('div')
+  root.classList.add('csui-root')
   const styleEl = document.createElement('link')
   const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? 'open' : 'closed' }) || container
   styleEl.setAttribute('rel', 'stylesheet')

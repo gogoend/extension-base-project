@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import 'uno.css'
 import { ElButton, ElOption, ElSelect } from 'element-plus'
 import request from '../../utils/request'
 

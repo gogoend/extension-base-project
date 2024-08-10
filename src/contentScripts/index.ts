@@ -1,3 +1,10 @@
+import 'uno.css'
+import './styles/common.css'
+
+/**
+ * element-plus
+ */
+import 'element-plus/dist/index.css'
 import { mittBus } from './utils/mittBus'
 
 const csHaveRunFlag = document.body.hasAttribute('data-gogoend-injected')
