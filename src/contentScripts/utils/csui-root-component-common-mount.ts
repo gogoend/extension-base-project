@@ -37,7 +37,11 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
 
   const { mounter, use } = mountConfig
   mounter(container)
-  const styleElLoadWaitee = Promise.withResolvers()
+  const styleElLoadWaitee = {}
+  styleElLoadWaitee.promise = new Promise((resolve, reject) => {
+    styleElLoadWaitee.resolve = resolve
+    styleElLoadWaitee.reject = reject
+  })
   styleEl.addEventListener('load', () => styleElLoadWaitee.resolve(undefined), { once: true })
   await styleElLoadWaitee.promise
   const app = createApp(RootComponent)
