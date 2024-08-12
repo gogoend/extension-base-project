@@ -1,5 +1,6 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
+import uaParser from 'ua-parser-js'
 import { messageHandlerMap } from './message-handler'
 import { ContentScriptAliveDetectMessage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
@@ -13,7 +14,15 @@ if (import.meta.hot) {
 }
 
 // remove or turn this off if you don't use side panel
-const USE_SIDE_PANEL = true
+const USE_SIDE_PANEL = (() => {
+  const ua = uaParser(navigator.userAgent)
+  if (
+    ua.browser.name === 'Chrome' && ua.browser.version?.split('.')[0] && Number(ua.browser.version?.split('.')[0]) >= 116
+  )
+    return true
+
+  return false
+})()
 
 // to toggle the sidepanel with the action button in chromium:
 if (USE_SIDE_PANEL) {
