@@ -1,8 +1,8 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
-import { messageHandlerMap } from './message-handler'
-import { ContentScriptAliveDetectMessage } from '~/type/worker-message'
+import type { AxiosPromise } from 'axios'
+import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerRequestMessage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
 
 // only on dev mode
@@ -80,11 +80,48 @@ onMessage('get-current-tab', async () => {
   }
 })
 
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (typeof messageHandlerMap[message.messageType] !== 'function')
-    return
-  return messageHandlerMap[message.messageType](message, sender, sendResponse)
-})
+onMessage(
+  WorkerAliveDetectMessage.tag,
+  async () => {
+    return true
+  },
+)
+
+onMessage(
+  WorkerRequestMessage.tag,
+  async (message) => {
+    const { axiosConf } = message.data
+    let {
+      url,
+      method,
+      headers,
+      data,
+    } = axiosConf
+
+    url = url || ''
+    method = method || 'GET'
+    data = ['GET', 'DELETE'].includes(method) ? null : data
+
+    const request = new Request(url, {
+      method,
+      headers: headers as any as HeadersInit,
+      body: data,
+    })
+
+    return fetch(request).then(async (res) => {
+      const responseBody = await res.text()
+      // console.log(res)
+      return {
+        data: responseBody,
+        headers: Object.fromEntries(res.headers.entries()),
+        status: res.status,
+        statusText: res.statusText,
+        config: axiosConf,
+        request,
+      }
+    }) as any as AxiosPromise
+  },
+)
 
 function installScript(tab: any) {
   let { content_scripts } = browser.runtime.getManifest()

@@ -1,4 +1,5 @@
 import type { ProtocolWithReturn } from 'webext-bridge'
+import type { AxiosPromise } from 'axios'
 import type * as WorkerMessage from './src/type/worker-message'
 
 declare module 'webext-bridge' {
@@ -10,6 +11,13 @@ declare module 'webext-bridge' {
       { tabId: number },
       { title?: string }
     >
-    [WorkerMessage.WorkerAliveDetectMessage.tag]: number
+    [WorkerMessage.WorkerAliveDetectMessage.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerAliveDetectMessage,
+      boolean
+    >
+    [WorkerMessage.WorkerRequestMessage.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerRequestMessage,
+      AxiosPromise
+    >
   }
 }

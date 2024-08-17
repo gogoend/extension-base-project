@@ -24,12 +24,9 @@ export class ContentScriptAliveDetectMessage extends WorkerBaseMessage {
  * 请求发送request
  */
 export class WorkerRequestMessage extends WorkerBaseMessage {
+  static tag = 'WorkerRequestMessage' as const
   public messageType: string = 'WorkerRequestMessage'
-  public static tag = 'WorkerRequestMessage'
-  public axiosConf: AxiosRequestConfig
-
-  public constructor(axiosConf: AxiosRequestConfig) {
+  public constructor(public axiosConf: AxiosRequestConfig) {
     super()
-    this.axiosConf = axiosConf
   }
 }
