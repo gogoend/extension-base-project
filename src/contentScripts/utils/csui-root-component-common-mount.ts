@@ -121,7 +121,11 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
       }
     }
     catch (err) {
-      console.error('挂载过程发生错误', err)
+      if (![
+        'CANNOT_FIND_INSERT_ANCHOR',
+      ].includes(err.message))
+        console.error('挂载过程发生错误', err)
+
       encounterErrorWhenMount = true
     }
   }

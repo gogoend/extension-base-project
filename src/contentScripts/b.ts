@@ -10,7 +10,7 @@ import { mittBus } from './utils/mittBus'
     mounter: (containerEl) => {
       const mountAtEl = document.querySelector('.result-op')
       if (!mountAtEl)
-        throw new ReferenceError('找不到对应元素')
+        throw new ReferenceError('CANNOT_FIND_INSERT_ANCHOR')
 
       mountAtEl?.parentElement?.prepend(containerEl)
     },
