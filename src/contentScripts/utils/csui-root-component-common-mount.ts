@@ -75,7 +75,7 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
     mittBus.emit('root-mount-error', {
       component: RootComponent,
     })
-    return
+    throw err
   }
   const dispose = () => {
     app.unmount()
@@ -85,6 +85,7 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   return {
     container,
     dispose,
+    app,
   }
 }
 
@@ -101,7 +102,7 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
   let periodCheckTimer: number
   periodCheckIfNodeOnScreen()
 
-  function dispose() {
+  function disposeCsui() {
     window.clearTimeout(periodCheckTimer)
     mountResult?.dispose()
     mittBus.off('root-mount-error', rootMountErrorHandler)
@@ -111,7 +112,7 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
     if (RootComponent !== component)
       return
 
-    dispose()
+    disposeCsui()
   }
   mittBus.on('root-mount-error', rootMountErrorHandler)
   async function periodCheckIfNodeOnScreen() {
@@ -123,6 +124,7 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
         if (!reuseOldElOnAnchorChange || encounterErrorWhenMount || !mountResult) {
           mountResult?.dispose()
           mountResult = await commonMount(RootComponent, mountConfig)
+          mountResult.app.config.globalProperties.disposeCsui = disposeCsui
           encounterErrorWhenMount = false
         }
         else {
@@ -140,6 +142,6 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
     }
   }
   return {
-    dispose,
+    disposeCsui,
   }
 }

@@ -6,7 +6,7 @@ import { mittBus } from './utils/mittBus'
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (async () => {
-  const { dispose } = await mountSingletonCsui(App, {
+  const { disposeCsui } = await mountSingletonCsui(App, {
     mounter: (containerEl) => {
       const mountAtEl = document.querySelector('.result-op')
       if (!mountAtEl)
@@ -26,5 +26,5 @@ import { mittBus } from './utils/mittBus'
       ],
     ],
   })
-  mittBus.on('extension-background-destroyed', dispose)
+  mittBus.on('extension-background-destroyed', disposeCsui)
 })()

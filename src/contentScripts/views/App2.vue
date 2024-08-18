@@ -10,9 +10,16 @@ onMounted(() => {
     r.value = res.data
   })
 })
-
+// 通过getCurrentInstance().appContext访问全局属性
+const currentInstance = getCurrentInstance()!
 async function handleCloseClick() {
-  (mountElDialogAsApp(CloseConfirm, reactive({}), 'close-confirm-dialog').show())
+  mountElDialogAsApp(CloseConfirm, reactive({}), 'close-confirm-dialog').show()
+    .then(({ promise }) => {
+      return promise
+    })
+    .then(() => {
+      currentInstance.appContext.config.globalProperties.disposeCsui()
+    })
 }
 </script>
 
