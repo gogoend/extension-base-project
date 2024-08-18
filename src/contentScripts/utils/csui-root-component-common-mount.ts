@@ -13,15 +13,7 @@ const defaultMountConfig = {
   use: [] as any[],
 }
 
-async function commonMount<T extends Component>(RootComponent: T, mountConfig = defaultMountConfig) {
-  // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
-  console.info('[vitesse-webext] Hello world from content script')
-
-  // communication example: send previous tab title from background page
-  onMessage('tab-prev', ({ data }) => {
-    console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
-  })
-
+export async function getShadow(mounter = defaultMountConfig.mounter) {
   // mount component to context window
   const container = document.createElement('gogoend-ui')
   container.id = __NAME__
@@ -35,7 +27,6 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   shadowDOM.appendChild(styleEl)
   shadowDOM.appendChild(root)
 
-  const { mounter, use } = mountConfig
   mounter(container)
   const styleElLoadWaitee = {}
   styleElLoadWaitee.promise = new Promise((resolve, reject) => {
@@ -44,8 +35,27 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
   })
   styleEl.addEventListener('load', () => styleElLoadWaitee.resolve(undefined), { once: true })
   await styleElLoadWaitee.promise
+
+  return {
+    root,
+    container,
+  }
+}
+
+async function commonMount<T extends Component>(RootComponent: T, mountConfig = defaultMountConfig) {
+  // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
+  console.info('[vitesse-webext] Hello world from content script')
+
+  // communication example: send previous tab title from background page
+  onMessage('tab-prev', ({ data }) => {
+    console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
+  })
+
+  const { root, container } = await getShadow(mountConfig.mounter)
+
   const app = createApp(RootComponent)
 
+  const { use } = mountConfig
   use?.forEach((it) => {
     if (Array.isArray(it)) {
       const [plugin, options] = it

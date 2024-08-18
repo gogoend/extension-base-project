@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ElButton, ElOption, ElSelect } from 'element-plus'
 import request from '../../utils/request'
+import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
+import CloseConfirm from './components/CloseConfirm.vue'
 
 const r = ref()
 onMounted(() => {
@@ -8,12 +10,18 @@ onMounted(() => {
     r.value = res.data
   })
 })
+
+async function handleCloseClick() {
+  (mountElDialogAsApp(CloseConfirm, reactive({}), 'close-confirm-dialog').show())
+}
 </script>
 
 <template>
   <div class="search-engine-insertion">
-    <ElButton>12345678</ElButton>
-    <hr>
+    <ElButton @click="handleCloseClick">
+      关闭
+    </ElButton>
+    <br>
     {{ r }}
     <div v-dompurify-html="r" />
     <ElSelect :teleported="false">
