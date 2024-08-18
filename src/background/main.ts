@@ -2,7 +2,7 @@ import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
 import type { AxiosPromise } from 'axios'
-import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerRequestMessage } from '~/type/worker-message'
+import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestMessage, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
 
 // only on dev mode
@@ -122,6 +122,33 @@ onMessage(
     }) as any as AxiosPromise
   },
 )
+
+onMessage(
+  WorkerGetLocalStorage.tag,
+  async () => {
+    return browser.storage.local.get()
+  },
+)
+onMessage(
+  WorkerUpdateLocalStorage.tag,
+  async (message) => {
+    browser.storage.local.set(message.data.payload)
+    return true
+  },
+)
+browser.storage.local.onChanged.addListener(async (changes) => {
+  const tabs = await browser.tabs.query({})
+
+  tabs.forEach((tab) => {
+    if (typeof tab.id !== 'number')
+      return
+
+    sendMessage(WorkerLocalStorageChanged.tag, new WorkerLocalStorageChanged(changes), {
+      context: 'content-script',
+      tabId: tab.id,
+    })
+  })
+})
 
 function installScript(tab: any) {
   let { content_scripts } = browser.runtime.getManifest()

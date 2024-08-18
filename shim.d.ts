@@ -19,5 +19,17 @@ declare module 'webext-bridge' {
       WorkerMessage.WorkerRequestMessage,
       AxiosPromise
     >
+    [WorkerMessage.WorkerUpdateLocalStorage.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerUpdateLocalStorage,
+      boolean
+    >
+    [WorkerMessage.WorkerLocalStorageChanged.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerLocalStorageChanged,
+      boolean
+    >
+    [WorkerMessage.WorkerGetLocalStorage.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerGetLocalStorage,
+      Record<string, any>
+    >
   }
 }

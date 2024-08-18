@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { ElButton, ElOption, ElSelect } from 'element-plus'
+import { sendMessage } from 'webext-bridge/content-script'
 import request from '../../utils/request'
 import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
 import CloseConfirm from './components/CloseConfirm.vue'
+import {
+  WorkerGetLocalStorage,
+  WorkerUpdateLocalStorage,
+} from '~/type/worker-message'
 
 const r = ref()
 onMounted(() => {
@@ -17,8 +22,16 @@ async function handleCloseClick() {
     .then(({ promise }) => {
       return promise
     })
-    .then(() => {
+    .then(async (closeScope) => {
       currentInstance.appContext.config.globalProperties.disposeCsui()
+      if (closeScope === 2) {
+        let localStorage = (await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage()))
+        localStorage = {
+          ...localStorage,
+          searchEngineEnhanceDisabled: true,
+        }
+        await sendMessage(WorkerUpdateLocalStorage.tag, new WorkerUpdateLocalStorage(localStorage))
+      }
     })
 }
 </script>
