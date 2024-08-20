@@ -3,7 +3,7 @@ import axios from 'axios'
 import { sendMessage } from 'webext-bridge/content-script'
 import { WorkerRequestMessage } from '~/type/worker-message'
 
-export async function workerAdapter(config: AxiosRequestConfig): AxiosPromise {
+export async function contentScriptRequestAdapter(config: AxiosRequestConfig): AxiosPromise {
   return new Promise((resolve, reject) => {
     sendMessage(WorkerRequestMessage.tag, new WorkerRequestMessage(config)).then((res) => {
       resolve(res)
@@ -13,8 +13,10 @@ export async function workerAdapter(config: AxiosRequestConfig): AxiosPromise {
   })
 }
 
-const request = axios.create({
-  adapter: workerAdapter,
-})
+const request = location.protocol === 'chrome-extension:'
+  ? axios.create()
+  : axios.create({
+    adapter: contentScriptRequestAdapter,
+  })
 
 export default request
