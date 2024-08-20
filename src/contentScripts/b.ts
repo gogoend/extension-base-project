@@ -1,6 +1,7 @@
 import ElementPlus from 'element-plus'
 import VueDOMPurifyHTML from 'vue-dompurify-html'
 import { sendMessage } from 'webext-bridge/content-script'
+import { throttle } from 'lodash-es'
 import App from './views/App2.vue'
 import mountSingletonCsui from './utils/csui-root-component-common-mount'
 import { mittBus } from './utils/mittBus'
@@ -42,7 +43,7 @@ async function mount() {
     disposeCsui?.()
     disposeCsui = undefined
   })
-  mittBus.on('local-storage-change', async () => {
+  mittBus.on('local-storage-change', throttle(async () => {
     const localStorage = await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage())
     if (localStorage.searchEngineEnhanceDisabled === true) {
       disposeCsui?.()
@@ -51,5 +52,5 @@ async function mount() {
     else {
       disposeCsui = await mount()
     }
-  })
+  }, 1000))
 })()
