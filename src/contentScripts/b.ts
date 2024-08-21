@@ -2,6 +2,7 @@ import ElementPlus from 'element-plus'
 import VueDOMPurifyHTML from 'vue-dompurify-html'
 import { sendMessage } from 'webext-bridge/content-script'
 import { throttle } from 'lodash-es'
+import type Browser from 'webextension-polyfill'
 import App from './views/App2.vue'
 import mountSingletonCsui from './utils/csui-root-component-common-mount'
 import { mittBus } from './utils/mittBus'
@@ -32,8 +33,11 @@ async function mount() {
 }
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
-(async () => {
+;(async () => {
+  let lastDisableStatus = false
+
   const localStorage = await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage())
+  lastDisableStatus = !!localStorage.searchEngineEnhanceDisabled
 
   let disposeCsui: undefined | (() => void)
   if (!localStorage.searchEngineEnhanceDisabled)
@@ -43,13 +47,19 @@ async function mount() {
     disposeCsui?.()
     disposeCsui = undefined
   })
-  mittBus.on('local-storage-change', throttle(async () => {
+  mittBus.on('local-storage-change', throttle(async (changes: Browser.Storage.StorageAreaOnChangedChangesType) => {
+    // 本地存储发生变化，如果包含了searchEngineEnhanceDisabled的变化，则重新从本地存储取最新值 - 不使用changes，是因为这个状态可能不是最新的
+    if (!Object.hasOwn(changes.data.payload, 'searchEngineEnhanceDisabled'))
+      return
+
     const localStorage = await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage())
     if (localStorage.searchEngineEnhanceDisabled === true) {
       disposeCsui?.()
       disposeCsui = undefined
+      lastDisableStatus = true
     }
-    else {
+    else if (lastDisableStatus !== !!localStorage.searchEngineEnhanceDisabled) {
+      lastDisableStatus = !!localStorage.searchEngineEnhanceDisabled
       disposeCsui = await mount()
     }
   }, 1000))
