@@ -20,22 +20,16 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
   container.style.display = 'block'
   const root = document.createElement('div')
   root.classList.add('csui-root')
-  const styleEl = document.createElement('link')
+  const styleEl = document.createElement('style')
   const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? 'open' : 'closed' }) || container
-  styleEl.setAttribute('rel', 'stylesheet')
-  styleEl.setAttribute('href', browser.runtime.getURL('dist/contentScripts/style.css'))
   shadowDOM.appendChild(styleEl)
   shadowDOM.appendChild(root)
-
-  mounter(container)
-  const styleElLoadWaitee = {}
-  styleElLoadWaitee.promise = new Promise((resolve, reject) => {
-    styleElLoadWaitee.resolve = resolve
-    styleElLoadWaitee.reject = reject
+  await fetch(
+    browser.runtime.getURL(`dist/contentScripts/style.css`),
+  ).then(res => res.text()).then((cssText) => {
+    styleEl.innerHTML = cssText
   })
-  styleEl.addEventListener('load', () => styleElLoadWaitee.resolve(undefined), { once: true })
-  await styleElLoadWaitee.promise
-
+  mounter(container)
   return {
     root,
     container,
