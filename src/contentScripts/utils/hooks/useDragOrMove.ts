@@ -5,10 +5,10 @@ export default function useDragOrClick({ onClick, elToBeDraggedRef, position }: 
     if (e.button !== 0)
       return
 
-    const currentPosition = elToBeDraggedRef.value.getBoundingClientRect() as DOMRect
+    const elToBeDraggedBBox = elToBeDraggedRef.value.getBoundingClientRect() as DOMRect
     startPositionInEl = [
-      e.pageX - currentPosition?.left,
-      e.pageY - currentPosition?.top,
+      e.pageX - elToBeDraggedBBox?.left,
+      e.pageY - elToBeDraggedBBox?.top,
     ]
     startPositionInPage = [
       e.pageX,
@@ -30,8 +30,7 @@ export default function useDragOrClick({ onClick, elToBeDraggedRef, position }: 
     )
       onClick.call(this, e)
 
-    startPositionInEl = [0, 0]
-    startPositionInPage = [0, 0]
+    checkAndCorrectPosition()
   }
   function handleMouseMove(e: MouseEvent) {
     e.preventDefault()
@@ -39,7 +38,34 @@ export default function useDragOrClick({ onClick, elToBeDraggedRef, position }: 
       e.pageX - startPositionInEl[0],
       e.pageY - startPositionInEl[1],
     ]
+    checkAndCorrectPosition()
   }
+
+  function checkAndCorrectPosition() {
+    const elToBeDraggedBBox = elToBeDraggedRef.value.getBoundingClientRect() as DOMRect
+
+    // 鼠标抬起时，判断元素是否位于浮动窗口可视区域内。如果在可视区域外，将移回可视区域内
+    if (position.value[0] <= 0)
+      position.value[0] = 0
+    else if (position.value[0] + elToBeDraggedBBox.width > window.innerWidth)
+      position.value[0] = window.innerWidth - elToBeDraggedBBox.width
+
+    if (position.value[1] <= 0)
+      position.value[1] = 0
+    else if (position.value[1] + elToBeDraggedBBox.height > window.innerHeight)
+      position.value[1] = window.innerHeight - elToBeDraggedBBox.height
+  }
+
+  window.addEventListener(
+    'resize',
+    checkAndCorrectPosition,
+  )
+  onUnmounted(() => {
+    window.removeEventListener(
+      'resize',
+      checkAndCorrectPosition,
+    )
+  })
 
   return { handleMouseDown }
 }
