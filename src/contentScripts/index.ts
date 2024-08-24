@@ -20,7 +20,6 @@ if (!csHaveRunFlag) {
   onMessage(WorkerLocalStorageChanged.tag, (changes) => {
     mittBus.emit('local-storage-change', changes)
   })
-  import('./attach-background-helper')
   import('./alive-detect')
   import('./a')
   import('./b')

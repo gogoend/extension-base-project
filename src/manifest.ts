@@ -54,10 +54,7 @@ export async function getManifest() {
     ],
     web_accessible_resources: [
       {
-        resources: [
-          'dist/contentScripts/style.css',
-          'dist/backgroundHelper/index.html',
-        ],
+        resources: ['dist/contentScripts/style.css'],
         matches: ['<all_urls>'],
       },
     ],
