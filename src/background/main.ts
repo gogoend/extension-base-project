@@ -1,7 +1,7 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
-import fetchToAxiosAdapter from '~/utils/fetch-to-axios-adapter'
+import { requestForHandleContentScript } from './utils/request'
 import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestMessage, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
 
@@ -90,8 +90,14 @@ onMessage(
 onMessage(
   WorkerRequestMessage.tag,
   async (message) => {
-    const { axiosConf } = message.data
-    return fetchToAxiosAdapter(axiosConf)
+    const { axiosConf = {} } = message.data
+    const {
+      transformRequest: _transformRequest,
+      transformResponse: _transformResponse,
+      ...restAxiosConf
+    } = axiosConf
+
+    return requestForHandleContentScript(restAxiosConf)
   },
 )
 
