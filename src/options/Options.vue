@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import logo from '~/assets/logo.svg'
+import request from '~/contentScripts/utils/request'
 import { storageDemo } from '~/logic/storage'
-import request from '~/utils/request'
 
 const r = ref()
 onMounted(() => {
