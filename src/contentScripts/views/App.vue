@@ -44,6 +44,7 @@ const { handleMouseDown } = useDragOrMove({ onClick: () => toggle(), elToBeDragg
   right: 0;
   z-index: 2147483646;
   cursor: pointer;
+  width: fit-content;
 }
 .popup-enter-from,
 .popup-leave-to {
