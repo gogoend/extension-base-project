@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ElButton, ElOption, ElSelect } from 'element-plus'
 import { sendMessage } from 'webext-bridge/content-script'
-import request from '../../utils/request'
 import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
 import CloseConfirm from './components/CloseConfirm.vue'
+import request from '~/contentScripts/utils/request'
 import {
   WorkerGetLocalStorage,
   WorkerUpdateLocalStorage,

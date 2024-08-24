@@ -1,7 +1,7 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
-import type { AxiosPromise } from 'axios'
+import fetchToAxiosAdapter from '~/utils/fetch-to-axios-adapter'
 import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestMessage, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
 
@@ -91,35 +91,7 @@ onMessage(
   WorkerRequestMessage.tag,
   async (message) => {
     const { axiosConf } = message.data
-    let {
-      url,
-      method,
-      headers,
-      data,
-    } = axiosConf
-
-    url = url || ''
-    method = method || 'GET'
-    data = ['GET', 'DELETE'].includes(method) ? null : data
-
-    const request = new Request(url, {
-      method,
-      headers: headers as any as HeadersInit,
-      body: data,
-    })
-
-    return fetch(request).then(async (res) => {
-      const responseBody = await res.text()
-      // console.log(res)
-      return {
-        data: responseBody,
-        headers: Object.fromEntries(res.headers.entries()),
-        status: res.status,
-        statusText: res.statusText,
-        config: axiosConf,
-        request,
-      }
-    }) as any as AxiosPromise
+    return fetchToAxiosAdapter(axiosConf)
   },
 )
 

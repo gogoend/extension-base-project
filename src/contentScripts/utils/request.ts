@@ -3,7 +3,7 @@ import axios from 'axios'
 import { sendMessage } from 'webext-bridge/content-script'
 import { WorkerRequestMessage } from '~/type/worker-message'
 
-export async function contentScriptRequestAdapter(config: AxiosRequestConfig): AxiosPromise {
+function contentScriptRequestAdapter(config: AxiosRequestConfig): AxiosPromise {
   return new Promise((resolve, reject) => {
     sendMessage(WorkerRequestMessage.tag, new WorkerRequestMessage(config)).then((res) => {
       resolve(res)
