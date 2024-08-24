@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import type { Component } from 'vue'
-import { createApp } from 'vue'
+import Vue from 'vue'
 import { debounce } from 'lodash-es'
 import type Browser from 'webextension-polyfill'
 import { mittBus } from './mittBus'
@@ -40,7 +40,7 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
   }
 }
 
-async function commonMount<T extends Component>(RootComponent: T, mountConfig = defaultMountConfig) {
+async function commonMount(RootComponent: any, mountConfig = defaultMountConfig) {
   // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
   console.info('[vitesse-webext] Hello world from content script')
 
@@ -51,22 +51,25 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
 
   const { root, container } = await getShadow(mountConfig.mounter)
 
-  const app = createApp(RootComponent)
+  const Ctor = Vue.extend(RootComponent)
 
   const { use } = mountConfig
   use?.forEach((it) => {
     if (Array.isArray(it)) {
       const [plugin, options] = it
-      app.use(plugin, options)
+      Ctor.use(plugin, options)
     }
     else {
-      app.use(it)
+      Ctor.use(it)
     }
   })
+  setupApp(Ctor)
+  const app = new Vue({
+    render: h => h(Ctor),
+  })
 
-  setupApp(app)
   try {
-    app.mount(root)
+    app.$mount(root)
   }
   catch (err) {
     console.error('根组件挂载发生错误', err)
@@ -76,7 +79,7 @@ async function commonMount<T extends Component>(RootComponent: T, mountConfig = 
     throw err
   }
   const dispose = () => {
-    app.unmount()
+    app.$destroy()
     container.remove()
   }
 
@@ -122,7 +125,8 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
         if (!reuseOldElOnAnchorChange || encounterErrorWhenMount || !mountResult) {
           mountResult?.dispose()
           mountResult = await commonMount(RootComponent, mountConfig)
-          mountResult.app.config.globalProperties.disposeCsui = disposeCsui
+          // FIXME:
+          // mountResult.app.config.globalProperties.disposeCsui = disposeCsui
           encounterErrorWhenMount = false
         }
         else {

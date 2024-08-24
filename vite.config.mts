@@ -3,7 +3,7 @@
 import { dirname, relative } from 'node:path'
 import type { UserConfig } from 'vite'
 import { defineConfig } from 'vite'
-import Vue from '@vitejs/plugin-vue'
+import Vue from '@vitejs/plugin-vue2'
 import Icons from 'unplugin-icons/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import Components from 'unplugin-vue-components/vite'
@@ -32,7 +32,8 @@ export const sharedConfig: UserConfig = {
         'vue',
         {
           'webextension-polyfill': [
-            ['*', 'browser'],
+            // https://github.com/antfu-collective/vitesse-webext/issues/171
+            ['default', 'browser'],
           ],
         },
       ],
@@ -60,7 +61,7 @@ export const sharedConfig: UserConfig = {
     Replace({
       delimiters: ['', ''],
       sourcemap: true,
-      include: ['**/node_modules/element-plus/**/*.css', '**/node_modules/element-plus/**/*.scss'],
+      include: ['**/node_modules/element-ui/**/*.css', '**/node_modules/element-ui/**/*.scss'],
       values: [
         {
           find: /(:root)/g,

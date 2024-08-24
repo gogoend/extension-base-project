@@ -1,4 +1,4 @@
-import ElementPlus from 'element-plus'
+import ElementUI from 'element-ui'
 import VueDOMPurifyHTML from 'vue-dompurify-html'
 import App from './views/App2.vue'
 import mountSingletonCsui, { mountWithLifeCycle } from './utils/csui-root-component-common-mount'
@@ -14,7 +14,7 @@ async function mount() {
     },
     reuseOldElOnAnchorChange: false,
     use: [
-      ElementPlus,
+      ElementUI,
       [
         VueDOMPurifyHTML,
         {

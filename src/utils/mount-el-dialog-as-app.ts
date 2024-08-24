@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { createApp, h } from 'vue'
+import Vue from 'vue'
 import { getShadow } from '~/contentScripts/utils/csui-root-component-common-mount'
 import { mittBus } from '~/contentScripts/utils/mittBus'
 
@@ -15,7 +15,7 @@ type ElWithDisposer = HTMLElement & {
 
 const pendingPromise: Record<string, Promise<any>> = {}
 
-export default function mountElDialogAsApp<T extends Component>(Comp: T, props, uniqueElId: string) {
+export default function mountElDialogAsApp<T extends Component>(Comp: T, props: any, uniqueElId: string) {
   // #region 对话框组件定义
   const show = () => {
     if (pendingPromise[uniqueElId] instanceof Promise)
@@ -35,10 +35,10 @@ export default function mountElDialogAsApp<T extends Component>(Comp: T, props, 
       const container = shadow.container as ElWithDisposer
       container.id = uniqueElId
 
-      let app: ReturnType<typeof createApp> | null = null
+      let app: Vue | null = null
       const kill = () => {
         props.modelValue = false
-        app?.unmount()
+        app?.$destroy()
         container.remove()
         delete container.__close__
         container.__waitee__?.reject?.()
@@ -85,12 +85,13 @@ export default function mountElDialogAsApp<T extends Component>(Comp: T, props, 
       props['onUpdate:modelValue'] = (v: boolean) => {
         props.modelValue = v
       }
-      app = createApp({
-        render: () => h(Comp, props),
+      app = new Vue({
+        render: h => h(Comp, props),
+        props,
       })
 
       const el = document.createElement('div')
-      app.mount(el)
+      app.$mount(el)
       root.appendChild(el)
 
       props.modelValue = true

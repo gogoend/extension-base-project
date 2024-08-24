@@ -2,9 +2,9 @@ import 'uno.css'
 import './styles/common.css'
 
 /**
- * element-plus
+ * element-ui
  */
-import 'element-plus/dist/index.css'
+import 'element-ui/lib/theme-chalk/index.css'
 import { onMessage } from 'webext-bridge/content-script'
 import { mittBus } from './utils/mittBus'
 import { WorkerLocalStorageChanged } from '~/type/worker-message'

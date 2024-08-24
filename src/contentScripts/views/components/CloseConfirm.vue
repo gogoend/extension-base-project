@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ElButton, ElDialog, ElRadio, ElRadioGroup } from 'element-plus'
+import { Button as ElButton, Dialog as ElDialog, Radio as ElRadio, RadioGroup as ElRadioGroup } from 'element-ui'
 
 defineProps({
   resolvers: {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElButton, ElOption, ElSelect } from 'element-plus'
+import { Button as ElButton, Option as ElOption, Select as ElSelect } from 'element-ui'
 import { sendMessage } from 'webext-bridge/content-script'
 import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
 import CloseConfirm from './components/CloseConfirm.vue'
