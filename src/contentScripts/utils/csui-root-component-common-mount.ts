@@ -40,15 +40,15 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
   }
 }
 
+// Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
+console.info('[vitesse-webext] Hello world from content script')
+
+// communication example: send previous tab title from background page
+onMessage('tab-prev', ({ data }) => {
+  console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
+})
+
 async function commonMount(RootComponent: any, mountConfig = defaultMountConfig) {
-  // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
-  console.info('[vitesse-webext] Hello world from content script')
-
-  // communication example: send previous tab title from background page
-  onMessage('tab-prev', ({ data }) => {
-    console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
-  })
-
   const { root, container } = await getShadow(mountConfig.mounter)
 
   const Ctor = Vue.extend(RootComponent)
