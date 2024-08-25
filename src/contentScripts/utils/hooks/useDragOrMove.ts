@@ -46,14 +46,16 @@ export default function useDragOrClick({ onClick, elToBeDraggedRef, position }: 
 
     // 鼠标抬起时，判断元素是否位于浮动窗口可视区域内。如果在可视区域外，将移回可视区域内
     if (position.value[0] <= 0)
-      position.value[0] = 0
+      position.value.splice(0, 1, 0)
+
     else if (position.value[0] + elToBeDraggedBBox.width > window.innerWidth)
-      position.value[0] = window.innerWidth - elToBeDraggedBBox.width
+      position.value.splice(0, 1, window.innerWidth - elToBeDraggedBBox.width)
 
     if (position.value[1] <= 0)
-      position.value[1] = 0
+      position.value.splice(1, 1, 0)
+
     else if (position.value[1] + elToBeDraggedBBox.height > window.innerHeight)
-      position.value[1] = window.innerHeight - elToBeDraggedBBox.height
+      position.value.splice(1, 1, window.innerHeight - elToBeDraggedBBox.height)
   }
 
   window.addEventListener(
