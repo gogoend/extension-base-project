@@ -1,5 +1,10 @@
 <script lang="ts" setup>
-import { Button as ElButton, Dialog as ElDialog, Radio as ElRadio, RadioGroup as ElRadioGroup } from 'element-ui'
+import {
+  Button as ElButton,
+  Dialog as ElDialog,
+  Radio as ElRadio,
+  RadioGroup as ElRadioGroup,
+} from 'element-ui'
 
 defineProps({
   resolvers: {
@@ -13,12 +18,13 @@ const selectedValue = ref(null)
 <template>
   <ElDialog
     v-bind="$attrs"
+    v-on="$listeners"
   >
     <ElRadioGroup v-model="selectedValue">
-      <ElRadio :value="1">
+      <ElRadio :label="1">
         临时关闭
       </ElRadio>
-      <ElRadio :value="2">
+      <ElRadio :label="2">
         永久关闭
       </ElRadio>
     </ElRadioGroup>

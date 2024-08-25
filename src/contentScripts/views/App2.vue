@@ -18,12 +18,12 @@ onMounted(() => {
 // 通过getCurrentInstance().appContext访问全局属性
 const currentInstance = getCurrentInstance()!
 async function handleCloseClick() {
-  mountElDialogAsApp(CloseConfirm, reactive({}), 'close-confirm-dialog').show()
+  mountElDialogAsApp(CloseConfirm, { uniqueElId: 'close-confirm-dialog' }).show()
     .then(({ promise }) => {
       return promise
     })
     .then(async (closeScope) => {
-      currentInstance.appContext.config.globalProperties.disposeCsui()
+      currentInstance.proxy.$disposeCsui()
       if (closeScope === 2) {
         let localStorage = (await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage()))
         localStorage = {

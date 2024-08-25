@@ -87,6 +87,7 @@ async function commonMount(RootComponent: any, mountConfig = defaultMountConfig)
     container,
     dispose,
     app,
+    ComponentConstructor: Ctor,
   }
 }
 
@@ -125,8 +126,7 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
         if (!reuseOldElOnAnchorChange || encounterErrorWhenMount || !mountResult) {
           mountResult?.dispose()
           mountResult = await commonMount(RootComponent, mountConfig)
-          // FIXME:
-          // mountResult.app.config.globalProperties.disposeCsui = disposeCsui
+          mountResult.ComponentConstructor.prototype.$disposeCsui = disposeCsui
           encounterErrorWhenMount = false
         }
         else {

@@ -15,10 +15,24 @@ type ElWithDisposer = HTMLElement & {
 
 const pendingPromise: Record<string, Promise<any>> = {}
 
-export default function mountElDialogAsApp<T extends Component>(Comp: T, props: any, uniqueElId: string) {
+interface DialogData {
+  data: any
+  on: {
+    [key: string]: Function | Function[]
+  }
+  uniqueElId: string
+}
+
+export default function mountElDialogAsApp(
+  Comp: Component,
+  option: Partial<DialogData>,
+) {
   // #region 对话框组件定义
   const show = () => {
-    if (pendingPromise[uniqueElId] instanceof Promise)
+    option = reactive({ data: {}, on: {}, uniqueElId: 'close-confirm-dialog' })
+    const { data = {}, on = {}, uniqueElId } = option
+
+    if (uniqueElId !== undefined && pendingPromise[uniqueElId] instanceof Promise)
       return pendingPromise[uniqueElId]
 
     const existEl = document.documentElement.querySelector(`#${uniqueElId}`) as ElWithDisposer | null
@@ -30,39 +44,29 @@ export default function mountElDialogAsApp<T extends Component>(Comp: T, props: 
       })
     }
     const p = getShadow().then((shadow) => {
-      delete pendingPromise[uniqueElId]
+      uniqueElId !== undefined && delete pendingPromise[uniqueElId]
       const root = shadow.root
       const container = shadow.container as ElWithDisposer
-      container.id = uniqueElId
+      uniqueElId !== undefined && (container.id = uniqueElId)
 
       let app: Vue | null = null
       const kill = () => {
-        props.modelValue = false
+        data.visible = false
         app?.$destroy()
         container.remove()
         delete container.__close__
         container.__waitee__?.reject?.()
         delete container.__waitee__
         delete container.__kill__
-        delete props.resolvers
+        Vue.delete(data, 'resolvers')
         app = null
         mittBus.off('extension-background-destroyed', kill)
       }
       mittBus.on('extension-background-destroyed', kill)
-      if (typeof props.onClosed === 'function') {
-        const originOnClosed = props.onClosed
-        props.onClosed = () => {
-          originOnClosed()
-          kill()
-        }
-      }
-      else {
-        props.onClosed = kill
-      }
 
       const close = async () => {
         await nextTick() // 假设直接 show().close() ，即改变了对话框在挂载之前的状态，将导致对话框DOM在body上存在，但永远也打不开对话框
-        props.modelValue = false // 设置false，而不是直接卸载组件、删掉元素，保证对话框过渡动画能够播放结束，然后再由onClosed卸载组件、删掉元素
+        data.visible = false // 设置false，而不是直接卸载组件、删掉元素，保证对话框过渡动画能够播放结束，然后再由onClosed卸载组件、删掉元素
       }
 
       container.__close__ = close
@@ -72,41 +76,53 @@ export default function mountElDialogAsApp<T extends Component>(Comp: T, props: 
         container!.__waitee__!.resolve = resolve
         container!.__waitee__!.reject = reject
 
-        props.resolvers = {
+        Vue.set(data, 'resolvers', {
           resolve,
           reject,
-        }
+        })
       })
       container.__waitee__.promise.finally(() => {
         close()
       })
+      Vue.set(data, 'visible', false)
 
-      props.modelValue = false
-      props['onUpdate:modelValue'] = (v: boolean) => {
-        props.modelValue = v
-      }
+      const { closed: closedListener, ...restListener } = on
+      const closedHandler: Function[] = closedListener ? Array.isArray(closedListener) ? [...closedListener] : [closedListener] : []
+      closedHandler.push(kill)
       app = new Vue({
-        render: h => h(Comp, props),
-        props,
+        render(h) {
+          return h(Comp, {
+            props: data,
+            attrs: {
+              ...data,
+              modalAppendToBody: false,
+            },
+            on: {
+              ...restListener,
+              'update:visible': function (v: boolean) {
+                data.visible = v
+              },
+              'closed': closedHandler,
+            },
+          })
+        },
       })
 
       const el = document.createElement('div')
-      app.$mount(el)
       root.appendChild(el)
-
-      props.modelValue = true
-
+      app!.$mount(el)
+      data.visible = true
       return {
         close,
         kill,
         promise: container.__waitee__.promise,
       }
     }, (err) => {
-      delete pendingPromise[uniqueElId]
+      uniqueElId !== undefined && delete pendingPromise[uniqueElId]
       throw err
     })
 
-    pendingPromise[uniqueElId] = p
+    uniqueElId !== undefined && (pendingPromise[uniqueElId] = p)
     return p
   }
   // #endregion
