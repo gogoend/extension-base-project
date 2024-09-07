@@ -63,13 +63,13 @@ export async function vue2Mount(RootComponent: any, mountConfig = defaultMountCo
   use?.forEach((it) => {
     if (Array.isArray(it)) {
       const [plugin, options] = it
-      Ctor.use(plugin, options)
+      Vue.use(plugin, options)
     }
     else {
-      Ctor.use(it)
+      Vue.use(it)
     }
   })
-  setupApp(Ctor)
+  setupApp(Vue)
   const app = new Vue({
     render: h => h(Ctor),
   })
@@ -94,6 +94,30 @@ export async function vue2Mount(RootComponent: any, mountConfig = defaultMountCo
     container,
     dispose,
     app,
+  }
+}
+
+export async function vanillaMount(el: HTMLElement, mountConfig = defaultMountConfig): Promise<MountFuncReturnType> {
+  const { root, container } = await getShadow(mountConfig.mounter)
+
+  try {
+    root.appendChild(el)
+  }
+  catch (err) {
+    console.error('根组件挂载发生错误', err)
+    mittBus.emit('root-mount-error', {
+      component: el,
+    })
+    throw err
+  }
+  const dispose = () => {
+    el.remove()
+    container.remove()
+  }
+  return {
+    container,
+    dispose,
+    app: el,
   }
 }
 

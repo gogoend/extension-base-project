@@ -7,6 +7,7 @@ import './styles/common.css'
 import 'element-ui/lib/theme-chalk/index.css'
 import { onMessage } from 'webext-bridge/content-script'
 import { mittBus } from './utils/mittBus'
+import { initBodyLevelElement } from './body-level-element'
 import { WorkerLocalStorageChanged } from '~/type/worker-message'
 
 const csHaveRunFlag = document.body.hasAttribute('data-gogoend-injected')
@@ -20,7 +21,11 @@ if (!csHaveRunFlag) {
   onMessage(WorkerLocalStorageChanged.tag, (changes) => {
     mittBus.emit('local-storage-change', changes)
   })
-  import('./alive-detect')
-  import('./a')
-  import('./b')
+
+  ;(async () => {
+    await initBodyLevelElement()
+    await import('./alive-detect')
+    await import('./a')
+    await import('./b')
+  })()
 }
