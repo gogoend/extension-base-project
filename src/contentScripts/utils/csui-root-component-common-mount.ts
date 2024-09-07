@@ -5,7 +5,6 @@ import Vue from 'vue'
 import { debounce } from 'lodash-es'
 import type Browser from 'webextension-polyfill'
 import { mittBus } from './mittBus'
-import { setupApp } from '~/logic/common-setup'
 
 import { WorkerGetLocalStorage } from '~/type/worker-message'
 
@@ -14,7 +13,6 @@ const defaultMountConfig = {
     document.documentElement.appendChild(containerEl)
   },
   reuseOldElOnAnchorChange: true,
-  use: [] as any[],
 }
 
 export async function getShadow(mounter = defaultMountConfig.mounter) {
@@ -58,18 +56,6 @@ export async function vue2Mount(RootComponent: any, mountConfig = defaultMountCo
   const { root, container } = await getShadow(mountConfig.mounter)
 
   const Ctor = Vue.extend(RootComponent)
-
-  const { use } = mountConfig
-  use?.forEach((it) => {
-    if (Array.isArray(it)) {
-      const [plugin, options] = it
-      Vue.use(plugin, options)
-    }
-    else {
-      Vue.use(it)
-    }
-  })
-  setupApp(Vue)
   const app = new Vue({
     render: h => h(Ctor),
   })
@@ -89,7 +75,7 @@ export async function vue2Mount(RootComponent: any, mountConfig = defaultMountCo
     container.remove()
   }
 
-  Ctor.prototype.$disposeCsui = mountConfig.disposeCsui
+  app.$disposeCsui = mountConfig.disposeCsui
   return {
     container,
     dispose,

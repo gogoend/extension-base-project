@@ -5,10 +5,24 @@ import './styles/common.css'
  * element-ui
  */
 import 'element-ui/lib/theme-chalk/index.css'
+import ElementUI from 'element-ui'
+import VueDOMPurifyHTML from 'vue-dompurify-html'
+import Vue from 'vue'
+
 import { onMessage } from 'webext-bridge/content-script'
+import { bodyLevelElement, initBodyLevelElement } from './body-level-element'
 import { mittBus } from './utils/mittBus'
-import { initBodyLevelElement } from './body-level-element'
 import { WorkerLocalStorageChanged } from '~/type/worker-message'
+import { setupApp } from '~/logic/common-setup'
+
+Vue.use(ElementUI, {
+  bodyLevelElement,
+})
+Vue.use(VueDOMPurifyHTML, {
+  FORBID_TAGS: ['style', 'head', 'title', 'body', 'script'],
+  FORBID_ATTR: ['style'],
+})
+setupApp(Vue)
 
 const csHaveRunFlag = document.body.hasAttribute('data-gogoend-injected')
 

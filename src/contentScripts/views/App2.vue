@@ -23,7 +23,7 @@ async function handleCloseClick() {
       return promise
     })
     .then(async (closeScope) => {
-      currentInstance.proxy.$disposeCsui()
+      currentInstance.proxy.$root.$disposeCsui()
       if (closeScope === 2) {
         let localStorage = (await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage()))
         localStorage = {

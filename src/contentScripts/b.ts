@@ -1,8 +1,5 @@
-import ElementUI from 'element-ui'
-import VueDOMPurifyHTML from 'vue-dompurify-html'
 import App from './views/App2.vue'
 import mountSingletonCsui, { mountWithLifeCycle, vue2Mount } from './utils/csui-root-component-common-mount'
-import { bodyLevelElement } from './body-level-element'
 
 async function mount() {
   const { disposeCsui } = await mountSingletonCsui(vue2Mount, App, {
@@ -14,21 +11,6 @@ async function mount() {
       mountAtEl?.parentElement?.prepend(containerEl)
     },
     reuseOldElOnAnchorChange: false,
-    use: [
-      [
-        ElementUI,
-        {
-          bodyLevelElement,
-        },
-      ],
-      [
-        VueDOMPurifyHTML,
-        {
-          FORBID_TAGS: ['style', 'head', 'title', 'body', 'script'],
-          FORBID_ATTR: ['style'],
-        },
-      ],
-    ],
   })
   return disposeCsui
 }
