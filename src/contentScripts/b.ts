@@ -1,10 +1,10 @@
 import ElementUI from 'element-ui'
 import VueDOMPurifyHTML from 'vue-dompurify-html'
 import App from './views/App2.vue'
-import mountSingletonCsui, { mountWithLifeCycle } from './utils/csui-root-component-common-mount'
+import mountSingletonCsui, { mountWithLifeCycle, vue2Mount } from './utils/csui-root-component-common-mount'
 
 async function mount() {
-  const { disposeCsui } = await mountSingletonCsui(App, {
+  const { disposeCsui } = await mountSingletonCsui(vue2Mount, App, {
     mounter: (containerEl) => {
       const mountAtEl = document.querySelector('.result-op')
       if (!mountAtEl)

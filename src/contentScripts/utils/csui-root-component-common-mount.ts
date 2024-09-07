@@ -48,7 +48,13 @@ onMessage('tab-prev', ({ data }) => {
   console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
 })
 
-async function commonMount(RootComponent: any, mountConfig = defaultMountConfig) {
+interface MountFuncReturnType {
+  container: HTMLElement
+  dispose: () => any
+  app: any
+}
+
+export async function vue2Mount(RootComponent: any, mountConfig = defaultMountConfig): Promise<MountFuncReturnType> {
   const { root, container } = await getShadow(mountConfig.mounter)
 
   const Ctor = Vue.extend(RootComponent)
@@ -83,32 +89,33 @@ async function commonMount(RootComponent: any, mountConfig = defaultMountConfig)
     container.remove()
   }
 
+  Ctor.prototype.$disposeCsui = mountConfig.disposeCsui
   return {
     container,
     dispose,
     app,
-    ComponentConstructor: Ctor,
   }
 }
 
-export default async function mountSingletonCsui<T extends Component>(RootComponent: T, specifiedMountConfig: Partial<typeof defaultMountConfig> = defaultMountConfig) {
+export default async function mountSingletonCsui(libraryRelatedMount: (...args: any[]) => Promise<MountFuncReturnType>, RootComponent: any, specifiedMountConfig: Partial<typeof defaultMountConfig> = defaultMountConfig) {
   const mountConfig = {
     ...defaultMountConfig,
     ...specifiedMountConfig,
   }
   const { reuseOldElOnAnchorChange } = mountConfig
-  let mountResult: Awaited<ReturnType<typeof commonMount>> | undefined
+  let mountResult: Awaited<ReturnType<typeof vue2Mount>> | undefined
 
   let encounterErrorWhenMount = false
 
   let periodCheckTimer: number
-  periodCheckIfNodeOnScreen()
 
   function disposeCsui() {
     window.clearTimeout(periodCheckTimer)
     mountResult?.dispose()
     mittBus.off('root-mount-error', rootMountErrorHandler)
+    return undefined
   }
+  mountConfig.disposeCsui = disposeCsui
 
   function rootMountErrorHandler({ component }: { component: Component }) {
     if (RootComponent !== component)
@@ -125,8 +132,7 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
       ) {
         if (!reuseOldElOnAnchorChange || encounterErrorWhenMount || !mountResult) {
           mountResult?.dispose()
-          mountResult = await commonMount(RootComponent, mountConfig)
-          mountResult.ComponentConstructor.prototype.$disposeCsui = disposeCsui
+          mountResult = await libraryRelatedMount(RootComponent, mountConfig)
           encounterErrorWhenMount = false
         }
         else {
@@ -143,6 +149,7 @@ export default async function mountSingletonCsui<T extends Component>(RootCompon
       encounterErrorWhenMount = true
     }
   }
+  periodCheckIfNodeOnScreen()
   return {
     disposeCsui,
   }
