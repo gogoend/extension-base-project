@@ -22,15 +22,17 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
   container.style.display = 'block'
   const root = document.createElement('div')
   root.classList.add('csui-root')
-  const styleEl = document.createElement('style')
   const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? 'open' : 'closed' }) || container
-  shadowDOM.appendChild(styleEl)
   shadowDOM.appendChild(root)
-  await fetch(
+  const cssText = await fetch(
     browser.runtime.getURL(`dist/contentScripts/style.css`),
-  ).then(res => res.text()).then((cssText) => {
-    styleEl.innerHTML = cssText
-  })
+  ).then(res => res.text())
+
+  // Create an empty "constructed" stylesheet
+  const stylesheet = new CSSStyleSheet()
+  // Apply a rule to the sheet
+  stylesheet.replaceSync(cssText)
+  shadowDOM.adoptedStyleSheets = [stylesheet]
   mounter(container)
   return {
     root,
