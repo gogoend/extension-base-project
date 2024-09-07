@@ -18,7 +18,7 @@ onMounted(() => {
 // 通过getCurrentInstance().appContext访问全局属性
 const currentInstance = getCurrentInstance()!
 async function handleCloseClick() {
-  mountElDialogAsApp(CloseConfirm, { uniqueElId: 'close-confirm-dialog' }).show()
+  mountElDialogAsApp(CloseConfirm, { uniqueElId: 'close-confirm-dialog' })
     .then(({ promise }) => {
       return promise
     })
@@ -33,6 +33,7 @@ async function handleCloseClick() {
         await sendMessage(WorkerUpdateLocalStorage.tag, new WorkerUpdateLocalStorage(localStorage))
       }
     })
+    .catch(() => void 0)
 }
 </script>
 
