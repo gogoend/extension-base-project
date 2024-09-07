@@ -19,6 +19,7 @@ export const sharedConfig: UserConfig = {
     alias: {
       '~/': `${r('src')}/`,
     },
+    dedupe: ['vue'],
   },
   define: {
     __DEV__: isDev,
