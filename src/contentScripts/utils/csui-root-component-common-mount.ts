@@ -4,6 +4,7 @@ import type { Component } from 'vue'
 import Vue from 'vue'
 import { debounce } from 'lodash-es'
 import type Browser from 'webextension-polyfill'
+import { initCsuiStyle } from '../csui-style'
 import { mittBus } from './mittBus'
 
 import { WorkerGetLocalStorage } from '~/type/worker-message'
@@ -24,9 +25,7 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
   root.classList.add('csui-root')
   const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? 'open' : 'closed' }) || container
   shadowDOM.appendChild(root)
-  const cssText = await fetch(
-    browser.runtime.getURL(`dist/contentScripts/style.css`),
-  ).then(res => res.text())
+  const cssText = await initCsuiStyle() as string
 
   // Create an empty "constructed" stylesheet
   const stylesheet = new CSSStyleSheet()
