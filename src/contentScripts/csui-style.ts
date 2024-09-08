@@ -39,7 +39,5 @@ export function initCsuiStyle() {
         throw err
       })
   }
-  else {
-    return styleTextInShadowPromise
-  }
+  return styleTextInShadowPromise
 }
