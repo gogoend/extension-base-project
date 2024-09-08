@@ -1,24 +1,12 @@
 import { getSession } from './ai-sessiom-manager'
+import { WorkerRequestStreamAiResponseErrorCode } from '~/type/worker-message'
+import type { WorkerRequestStreamAiRequestPayload, WorkerRequestStreamAiResponsePayload } from '~/type/worker-message'
 
 const connectionMapById: Record<string, true> = {}
 
-enum ResponseErrorCode {
-  NO_ERROR = 0,
-  UNKNOWN_ERROR = 1,
-}
-interface ResponsePayload {
-  connectId: string
-  text: string
-  index: number
-  errorCode: ResponseErrorCode
-  errorContent?: any
-}
-
-interface RequestPayload {
-  connectId: string
-  sessionId: string
-  prompt: string
-}
+type RequestPayload = WorkerRequestStreamAiRequestPayload
+type ResponsePayload = WorkerRequestStreamAiResponsePayload
+const ResponseErrorCode = WorkerRequestStreamAiResponseErrorCode
 
 export async function startupPromptStream(
   {

@@ -1,8 +1,9 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
+import { v4 as uuid } from 'uuid'
 import { requestForHandleContentScript } from './utils/request'
-import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestMessage, WorkerUpdateLocalStorage } from '~/type/worker-message'
+import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
 
 // only on dev mode
@@ -166,8 +167,65 @@ browser.tabs.onActivated.addListener(async (tab) => {
   }
 })
 
-browser.offscreen.createDocument({
-  url: 'dist/offscreen/index.html',
-  reasons: ['WORKERS'],
-  justification: 'AI worker',
+const OFFSCREEN_DOCUMENT_PATH = 'dist/offscreen/index.html'
+const OFFSCREEN_DOCUMENT_URL = browser.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)
+async function hasOffscreenDocument() {
+  // Check all windows controlled by the service worker to see if one
+  // of them is the offscreen document with the given path
+  const contexts = await browser.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'],
+    documentUrls: [OFFSCREEN_DOCUMENT_URL],
+  })
+  return Boolean(contexts.length)
+}
+
+let offscreenCreating: Promise<unknown> | null = null // A global promise to avoid concurrency issues
+async function setupOffscreenDocument() {
+  const path = 'dist/offscreen/index.html'
+
+  if (await hasOffscreenDocument())
+    return
+
+  // create offscreen document
+  if (offscreenCreating) {
+    await offscreenCreating
+  }
+  else {
+    offscreenCreating = browser.offscreen.createDocument({
+      url: path,
+      reasons: ['WORKERS'],
+      justification: 'AI worker',
+    })
+    await offscreenCreating
+    offscreenCreating = null
+  }
+}
+let sessionId: string
+async function talkWithAi(prompt: string) {
+  await setupOffscreenDocument()
+  // Send message to offscreen document
+  if (!sessionId) {
+    sessionId = await browser.runtime.sendMessage({
+      target: 'offscreen',
+      data: new WorkerRequestAiSessionId(),
+    })
+  }
+
+  browser.runtime.sendMessage({
+    target: 'offscreen',
+    data: new WorkerRequestStreamAi({
+      connectId: uuid(),
+      sessionId,
+      prompt,
+    }),
+  })
+}
+
+browser.runtime.onMessage.addListener((message) => {
+  if (message.messageType !== WorkerResponseStreamAi.tag)
+    return
+
+  console.warn(message.payload)
 })
+
+globalThis.talkWithAi = talkWithAi

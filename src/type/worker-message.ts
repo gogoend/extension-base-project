@@ -55,3 +55,47 @@ export class WorkerLocalStorageChanged extends WorkerBaseMessage {
     super()
   }
 }
+
+/**
+ * 流式AI 发送
+ */
+export enum WorkerRequestStreamAiResponseErrorCode {
+  NO_ERROR = 0,
+  UNKNOWN_ERROR = 1,
+}
+
+export interface WorkerRequestStreamAiRequestPayload {
+  connectId: string
+  sessionId: string
+  prompt: string
+}
+export class WorkerRequestStreamAi extends WorkerBaseMessage {
+  static tag = 'WorkerRequestStreamAi' as const
+  public messageType: string = 'WorkerRequestStreamAi'
+  public constructor(public payload: WorkerRequestStreamAiRequestPayload) {
+    super()
+  }
+}
+
+export interface WorkerRequestStreamAiResponsePayload {
+  connectId: string
+  text: string
+  index: number
+  errorCode: WorkerRequestStreamAiResponseErrorCode
+  errorContent?: any
+}
+export class WorkerResponseStreamAi extends WorkerBaseMessage {
+  static tag = 'WorkerRequestStreamAi' as const
+  public messageType: string = 'WorkerRequestStreamAi'
+  public constructor(public payload: WorkerRequestStreamAiResponsePayload) {
+    super()
+  }
+}
+
+export class WorkerRequestAiSessionId extends WorkerBaseMessage {
+  static tag = 'WorkerRequestAiSessionId' as const
+  public messageType: string = 'WorkerRequestAiSessionId'
+  public constructor() {
+    super()
+  }
+}

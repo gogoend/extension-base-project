@@ -31,5 +31,13 @@ declare module 'webext-bridge' {
       WorkerMessage.WorkerGetLocalStorage,
       Record<string, any>
     >
+    [WorkerMessage.WorkerRequestStreamAi.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerRequestStreamAi,
+      void
+    >
+    [WorkerMessage.WorkerResponseStreamAi.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerResponseStreamAi,
+      void
+    >
   }
 }
