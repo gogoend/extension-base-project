@@ -88,7 +88,7 @@ async function askAi() {
 
     if (message.data.payload.index === -1) {
       askLoading.value = false
-      if (message.data.payload)
+      if (message.data.payload.errorCode !== 0)
         hasError.value = true
     }
   })
