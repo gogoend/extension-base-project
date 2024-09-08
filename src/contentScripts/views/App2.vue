@@ -12,6 +12,7 @@ import {
   WorkerResponseStreamAi,
   WorkerUpdateLocalStorage,
 } from '~/type/worker-message'
+import MarkdownContent from '~/components/MarkdownContent.vue'
 
 const r = ref()
 onMounted(() => {
@@ -108,10 +109,12 @@ async function askAi() {
       </ElButton>
     </form>
     <div class="ai-content">
-      {{ aiResponse }}<template v-if="hasError">
-        &nbsp;&nbsp;<i class="el-icon-error color-red" />
-      </template>
+      <MarkdownContent :content="aiResponse" />
     </div>
+    <template v-if="hasError">
+      &nbsp;&nbsp;<i class="el-icon-error color-red" />
+    </template>
+
     <div v-dompurify-html="r" />
     <ElSelect v-model="selectValue" :teleported="false">
       <ElOption :value="1">
