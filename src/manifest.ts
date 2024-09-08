@@ -40,6 +40,7 @@ export async function getManifest() {
       'activeTab',
       'sidePanel',
       'scripting',
+      'offscreen',
     ],
     host_permissions: ['*://*/*'],
     content_scripts: [

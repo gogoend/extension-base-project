@@ -165,3 +165,9 @@ browser.tabs.onActivated.addListener(async (tab) => {
     }
   }
 })
+
+browser.offscreen.createDocument({
+  url: 'dist/offscreen/index.html',
+  reasons: ['WORKERS'],
+  justification: 'AI worker',
+})
