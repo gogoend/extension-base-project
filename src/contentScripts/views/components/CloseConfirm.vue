@@ -5,19 +5,16 @@ import {
   Radio as ElRadio,
   RadioGroup as ElRadioGroup,
 } from 'element-ui'
+import PromiseDialog from '~/utils/mount-el-dialog-as-app/PromiseDialog.vue'
 
-defineProps({
-  resolvers: {
-    type: Object,
-  },
-})
-
+const promiseDialogRef = ref<InstanceType<typeof PromiseDialog>>()
 const selectedValue = ref(null)
 </script>
 
 <template>
-  <ElDialog
+  <PromiseDialog
     v-bind="$attrs"
+    ref="promiseDialogRef"
     v-on="$listeners"
   >
     <ElRadioGroup v-model="selectedValue">
@@ -29,12 +26,12 @@ const selectedValue = ref(null)
       </ElRadio>
     </ElRadioGroup>
     <template #footer>
-      <ElButton @click="resolvers.reject()">
+      <ElButton @click="promiseDialogRef?.resolvers.reject()">
         取消
       </ElButton>
-      <ElButton :disabled="selectedValue === null" type="primary" @click="resolvers.resolve(selectedValue)">
+      <ElButton :disabled="selectedValue === null" type="primary" @click="promiseDialogRef?.resolvers.resolve(selectedValue)">
         确定
       </ElButton>
     </template>
-  </ElDialog>
+  </PromiseDialog>
 </template>
