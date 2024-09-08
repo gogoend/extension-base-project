@@ -32,7 +32,7 @@ const { handleMouseDown } = useDragOrMove({ onClick: () => toggle(), elToBeDragg
         bg="teal-600 hover:teal-700"
         @mousedown="handleMouseDown"
       >
-        <pixelarticons-power class="block m-auto text-white text-24px" />
+        <icon-pixelarticons-power class="block m-auto text-white text-24px" />
       </button>
     </div>
   </div>
