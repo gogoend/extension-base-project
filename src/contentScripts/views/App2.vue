@@ -39,6 +39,8 @@ async function handleCloseClick() {
     })
     .catch(() => void 0)
 }
+
+const selectValue = ref(1)
 onMounted(async () => {
   const sessionId = await sendMessage(WorkerRequestAiSessionId.tag, new WorkerRequestAiSessionId())
 
@@ -62,7 +64,7 @@ onMounted(async () => {
     <br>
     {{ r }}
     <div v-dompurify-html="r" />
-    <ElSelect :teleported="false">
+    <ElSelect v-model="selectValue" :teleported="false">
       <ElOption :value="1">
         1
       </ElOption>
