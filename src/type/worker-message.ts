@@ -68,6 +68,7 @@ export interface WorkerRequestStreamAiRequestPayload {
   connectId: string
   sessionId: string
   prompt: string
+  __internal__sender?: Browser.Runtime.MessageSender
 }
 export class WorkerRequestStreamAi extends WorkerBaseMessage {
   static tag = 'WorkerRequestStreamAi' as const
@@ -83,10 +84,11 @@ export interface WorkerRequestStreamAiResponsePayload {
   index: number
   errorCode: WorkerRequestStreamAiResponseErrorCode
   errorContent?: any
+  __internal__sender?: Browser.Runtime.MessageSender
 }
 export class WorkerResponseStreamAi extends WorkerBaseMessage {
-  static tag = 'WorkerRequestStreamAi' as const
-  public messageType: string = 'WorkerRequestStreamAi'
+  static tag = 'WorkerResponseStreamAi' as const
+  public messageType: string = 'WorkerResponseStreamAi'
   public constructor(public payload: WorkerRequestStreamAiResponsePayload) {
     super()
   }

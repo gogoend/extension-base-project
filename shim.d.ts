@@ -39,5 +39,9 @@ declare module 'webext-bridge' {
       WorkerMessage.WorkerResponseStreamAi,
       void
     >
+    [WorkerMessage.WorkerRequestAiSessionId.tag]: ProtocolWithReturn<
+      WorkerMessage.WorkerRequestAiSessionId,
+      string
+    >
   }
 }

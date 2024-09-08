@@ -8,14 +8,17 @@ import { WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi
 
 const handlerMap = {
   [WorkerRequestStreamAi.tag](message) {
-    const { connectId, sessionId, prompt } = message.data.payload
+    const { connectId, sessionId, prompt, __internal__sender } = message.data.payload
 
     startupPromptStream({
       connectId,
       sessionId,
       prompt,
     }, (response) => {
-      browser.runtime.sendMessage(new WorkerResponseStreamAi(response))
+      browser.runtime.sendMessage(new WorkerResponseStreamAi({
+        ...response,
+        __internal__sender,
+      }))
     })
   },
   async [WorkerRequestAiSessionId.tag]() {

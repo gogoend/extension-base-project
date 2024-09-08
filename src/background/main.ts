@@ -200,32 +200,35 @@ async function setupOffscreenDocument() {
     offscreenCreating = null
   }
 }
-let sessionId: string
-async function talkWithAi(prompt: string) {
-  await setupOffscreenDocument()
-  // Send message to offscreen document
-  if (!sessionId) {
-    sessionId = await browser.runtime.sendMessage({
-      target: 'offscreen',
-      data: new WorkerRequestAiSessionId(),
-    })
-  }
 
+onMessage(WorkerRequestAiSessionId.tag, async () => {
+  await setupOffscreenDocument()
+  return await browser.runtime.sendMessage({
+    target: 'offscreen',
+    data: new WorkerRequestAiSessionId(),
+  })
+})
+
+onMessage(WorkerRequestStreamAi.tag, async (event) => {
+  await setupOffscreenDocument()
+
+  const { connectId, sessionId, prompt } = event.data.payload
   browser.runtime.sendMessage({
     target: 'offscreen',
     data: new WorkerRequestStreamAi({
-      connectId: uuid(),
+      connectId,
       sessionId,
       prompt,
+      __internal__sender: event.sender,
     }),
   })
-}
+})
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.messageType !== WorkerResponseStreamAi.tag)
     return
 
-  console.warn(message.payload)
+  const { __internal__sender } = message.payload
+  delete message.payload.__internal__sender
+  sendMessage(WorkerResponseStreamAi.tag, new WorkerResponseStreamAi(message.payload), __internal__sender)
 })
-
-globalThis.talkWithAi = talkWithAi

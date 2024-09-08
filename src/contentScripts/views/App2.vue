@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { Button as ElButton, Option as ElOption, Select as ElSelect } from 'element-ui'
-import { sendMessage } from 'webext-bridge/content-script'
+import { onMessage, sendMessage } from 'webext-bridge/content-script'
+import { v4 as uuid } from 'uuid'
 import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
 import CloseConfirm from './components/CloseConfirm.vue'
 import request from '~/contentScripts/utils/request'
 import {
   WorkerGetLocalStorage,
+  WorkerRequestAiSessionId,
+  WorkerRequestStreamAi,
+  WorkerResponseStreamAi,
   WorkerUpdateLocalStorage,
 } from '~/type/worker-message'
 
@@ -35,6 +39,19 @@ async function handleCloseClick() {
     })
     .catch(() => void 0)
 }
+onMounted(async () => {
+  const sessionId = await sendMessage(WorkerRequestAiSessionId.tag, new WorkerRequestAiSessionId())
+
+  sendMessage(WorkerRequestStreamAi.tag, new WorkerRequestStreamAi({
+    connectId: uuid(),
+    sessionId,
+    prompt: 'go go go',
+  }))
+
+  onMessage(WorkerResponseStreamAi.tag, (message) => {
+    console.warn(message.data.payload)
+  })
+})
 </script>
 
 <template>
