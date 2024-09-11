@@ -111,7 +111,7 @@ onMessage(
 onMessage(
   WorkerUpdateLocalStorage.tag,
   async (message) => {
-    browser.storage.local.set(message.data.payload)
+    await browser.storage.local.set(message.data.payload)
     return true
   },
 )
