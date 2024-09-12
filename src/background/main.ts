@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid'
 import { requestForHandleContentScript } from './utils/request'
 import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
+import { handleMessage } from '~/utils/messaging'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -88,10 +89,10 @@ onMessage(
   },
 )
 
-onMessage(
+handleMessage(
   WorkerRequestMessage.tag,
-  async (message) => {
-    const { axiosConf = {} } = message.data
+  async ({ message }, _sender) => {
+    const { axiosConf = {} } = message
     const {
       transformRequest: _transformRequest,
       transformResponse: _transformResponse,
