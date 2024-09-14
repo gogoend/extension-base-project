@@ -1,11 +1,10 @@
 import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
-import { v4 as uuid } from 'uuid'
 import { requestForHandleContentScript } from './utils/request'
-import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
+import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
-import { handleMessageFactory } from '~/utils/messaging'
+import { handleMessageFactory, sendToTabById } from '~/utils/messaging'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -202,34 +201,13 @@ async function setupOffscreenDocument() {
   }
 }
 
-onMessage(WorkerRequestAiSessionId.tag, async () => {
-  await setupOffscreenDocument()
-  return await browser.runtime.sendMessage({
-    target: 'offscreen',
-    data: new WorkerRequestAiSessionId(),
-  })
+handleMessageFactory('background')(EnsureOffscreen.tag, async () => {
+  return await setupOffscreenDocument()
 })
 
-onMessage(WorkerRequestStreamAi.tag, async (event) => {
-  await setupOffscreenDocument()
-
-  const { connectId, sessionId, prompt } = event.data.payload
-  browser.runtime.sendMessage({
-    target: 'offscreen',
-    data: new WorkerRequestStreamAi({
-      connectId,
-      sessionId,
-      prompt,
-      __internal__sender: event.sender,
-    }),
-  })
-})
-
-browser.runtime.onMessage.addListener((message) => {
-  if (message.messageType !== WorkerResponseStreamAi.tag)
-    return
-
-  const { __internal__sender } = message.payload
-  delete message.payload.__internal__sender
-  sendMessage(WorkerResponseStreamAi.tag, new WorkerResponseStreamAi(message.payload), __internal__sender)
+handleMessageFactory('background')(BackgroundRelayOffscreenMessageToSender.tag, ({ message }) => {
+  sendToTabById(
+    message.payload.sender.tab.id,
+    message.payload.message,
+  )
 })

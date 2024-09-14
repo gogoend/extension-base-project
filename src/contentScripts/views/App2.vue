@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
-import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import { v4 as uuid } from 'uuid'
 import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
+import { sendToOffscreen } from '../../utils/messaging'
 import CloseConfirm from './components/CloseConfirm.vue'
 import request from '~/contentScripts/utils/request'
 import {
@@ -13,6 +13,7 @@ import {
   WorkerUpdateLocalStorage,
 } from '~/type/worker-message'
 import MarkdownContent from '~/components/MarkdownContent.vue'
+import { handleMessageFactory } from '~/utils/messaging'
 
 const r = ref()
 onMounted(() => {
@@ -68,28 +69,28 @@ async function askAi() {
 
   let sessionId
   try {
-    sessionId = await sendMessage(WorkerRequestAiSessionId.tag, new WorkerRequestAiSessionId())
+    sessionId = await sendToOffscreen(new WorkerRequestAiSessionId())
   }
   catch {
     askLoading.value = false
     return
   }
 
-  sendMessage(WorkerRequestStreamAi.tag, new WorkerRequestStreamAi({
+  sendToOffscreen(new WorkerRequestStreamAi({
     connectId: uuid(),
     sessionId,
     prompt: prompt.value,
   }))
 
-  onMessage(WorkerResponseStreamAi.tag, (message) => {
-    if (message.data.payload.index === 0)
+  handleMessageFactory('tab')(WorkerResponseStreamAi.tag, ({ message }) => {
+    if (message.payload.index === 0)
       aiResponse.value = ''
 
-    aiResponse.value += message.data.payload.text
+    aiResponse.value += message.payload.text
 
-    if (message.data.payload.index === -1) {
+    if (message.payload.index === -1) {
       askLoading.value = false
-      if (message.data.payload.errorCode !== 0)
+      if (message.payload.errorCode !== 0)
         hasError.value = true
     }
   })

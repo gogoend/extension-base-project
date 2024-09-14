@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill'
+import { EnsureOffscreen } from '~/type/worker-message'
 
 export function sendToBackground(message) {
   return browser.runtime.sendMessage({
@@ -21,7 +22,8 @@ export function sendToSidepanel(message) {
   })
 }
 
-export function sendToOffscreen(message) {
+export async function sendToOffscreen(message) {
+  await sendToBackground(new EnsureOffscreen())
   return browser.runtime.sendMessage({
     target: 'offscreen',
     message,
@@ -29,7 +31,7 @@ export function sendToOffscreen(message) {
 }
 
 export function sendToTabById(tabId: number, message) {
-  return browser.tabs.sendMessage(tabId, message)
+  return browser.tabs.sendMessage(tabId, { message, target: 'tab' })
 }
 
 export function broadcastToTabs(tabIdList: number[], message) {

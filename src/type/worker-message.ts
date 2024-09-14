@@ -68,7 +68,6 @@ export interface WorkerRequestStreamAiRequestPayload {
   connectId: string
   sessionId: string
   prompt: string
-  __internal__sender?: Browser.Runtime.MessageSender
 }
 export class WorkerRequestStreamAi extends WorkerBaseMessage {
   static tag = 'WorkerRequestStreamAi' as const
@@ -84,7 +83,6 @@ export interface WorkerRequestStreamAiResponsePayload {
   index: number
   errorCode: WorkerRequestStreamAiResponseErrorCode
   errorContent?: any
-  __internal__sender?: Browser.Runtime.MessageSender
 }
 export class WorkerResponseStreamAi extends WorkerBaseMessage {
   static tag = 'WorkerResponseStreamAi' as const
@@ -111,6 +109,22 @@ export class SidepanelUpdateContextByPageContent extends WorkerBaseMessage {
   static tag = 'SidepanelUpdateContextByPageContent' as const
   public messageType: string = 'SidepanelUpdateContextByPageContent'
   public constructor(public payload: SidepanelUpdateContextByPageContentPayload) {
+    super()
+  }
+}
+
+export class EnsureOffscreen extends WorkerBaseMessage {
+  static tag = 'EnsureOffscreen' as const
+  public messageType: string = 'EnsureOffscreen'
+}
+export interface BackgroundRelayOffscreenMessageToSenderPayload<T = WorkerResponseStreamAi> {
+  sender: Browser.Runtime.MessageSender
+  message: T
+}
+export class BackgroundRelayOffscreenMessageToSender extends WorkerBaseMessage {
+  static tag = 'BackgroundRelayOffscreenMessageToSender' as const
+  public messageType: string = 'BackgroundRelayOffscreenMessageToSender'
+  public constructor(public payload: BackgroundRelayOffscreenMessageToSenderPayload) {
     super()
   }
 }

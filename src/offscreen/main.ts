@@ -1,37 +1,32 @@
+import type Browser from 'webextension-polyfill'
+import { sendToBackground, sendToTabById } from '../utils/messaging'
 import { startupPromptStream } from './ai-connection-manager'
 import { createSession } from './ai-sessiom-manager'
-import { WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi } from '~/type/worker-message'
+import { handleMessageFactory } from '~/utils/messaging'
+import { BackgroundRelayOffscreenMessageToSender, WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi } from '~/type/worker-message'
 
-(async () => {
+handleMessageFactory('offscreen')(WorkerRequestAiSessionId.tag, async () => {
+  return (await createSession()).id
+})
+handleMessageFactory('offscreen')(WorkerRequestStreamAi.tag, async (message, sender: Browser.Runtime.MessageSender) => {
+  const { connectId, sessionId, prompt } = message.message.payload
 
-})()
-
-const handlerMap = {
-  [WorkerRequestStreamAi.tag](message) {
-    const { connectId, sessionId, prompt, __internal__sender } = message.data.payload
-
-    startupPromptStream({
-      connectId,
-      sessionId,
-      prompt,
-    }, (response) => {
-      browser.runtime.sendMessage(new WorkerResponseStreamAi({
-        ...response,
-        __internal__sender,
-      }))
-    })
-  },
-  async [WorkerRequestAiSessionId.tag]() {
-    return (await createSession()).id
-  },
-}
-
-browser.runtime.onMessage.addListener((message, sender) => {
-  const messageType = message.data.messageType
-  if (typeof handlerMap[messageType] !== 'function')
-    return
-
-  return handlerMap[messageType](message, sender)
+  startupPromptStream({
+    connectId,
+    sessionId,
+    prompt,
+  }, (response) => {
+    sendToBackground(
+      new BackgroundRelayOffscreenMessageToSender(
+        {
+          sender,
+          message: new WorkerResponseStreamAi({
+            ...response,
+          }),
+        },
+      ),
+    )
+  })
 })
 
 export default {}
