@@ -4,7 +4,7 @@ import uaParser from 'ua-parser-js'
 import { requestForHandleContentScript } from './utils/request'
 import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
-import { handleMessageFactory, sendToTabById } from '~/utils/messaging'
+import { handleMessageFactory, sendToSidepanel, sendToTabById } from '~/utils/messaging'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -206,8 +206,13 @@ handleMessageFactory('background')(EnsureOffscreen.tag, async () => {
 })
 
 handleMessageFactory('background')(BackgroundRelayOffscreenMessageToSender.tag, ({ message }) => {
-  sendToTabById(
-    message.payload.sender.tab.id,
-    message.payload.message,
-  )
+  if (message.payload.sender.tab) {
+    sendToTabById(
+      message.payload.sender.tab.id,
+      message.payload.message,
+    )
+  }
+  else {
+    sendToSidepanel(message.payload.message)
+  }
 })

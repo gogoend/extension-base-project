@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import CloseConfirm from '../contentScripts/views/components/CloseConfirm.vue'
 import mountElDialogAsApp from '../utils/mount-el-dialog-as-app'
+import ChatPanel from '~/components/ChatPanel/index.vue'
 import { handleMessageFactory } from '~/utils/messaging'
 import { storageDemo } from '~/logic/storage'
 import { SidepanelUpdateContextByPageContent } from '~/type/worker-message'
@@ -53,5 +54,7 @@ onUnmounted(cancelPageContentUpdateListen)
       </ElButton>
     </div>
     <CloseConfirm :visible.sync="visible" />
+
+    <ChatPanel />
   </main>
 </template>
