@@ -39,6 +39,7 @@ if (!csHaveRunFlag) {
   ;(async () => {
     await initBodyLevelElement()
     await import('./alive-detect')
+    await import('./sidepanel-bridge')
     await import('./a')
     await import('./b')
   })()

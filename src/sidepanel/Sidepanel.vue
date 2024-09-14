@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import CloseConfirm from '../contentScripts/views/components/CloseConfirm.vue'
 import mountElDialogAsApp from '../utils/mount-el-dialog-as-app'
+import { handleMessageFactory } from '~/utils/messaging'
 import { storageDemo } from '~/logic/storage'
+import { SidepanelUpdateContextByPageContent } from '~/type/worker-message'
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage()
@@ -18,6 +20,12 @@ function handleImperativeDialog() {
     })
     .catch(() => void 0)
 }
+
+const pageAbstract = ref(null)
+const cancelPageContentUpdateListen = handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, (message) => {
+  pageAbstract.value = message.message.payload
+})
+onUnmounted(cancelPageContentUpdateListen)
 </script>
 
 <template>
@@ -31,6 +39,10 @@ function handleImperativeDialog() {
     </button>
     <div class="mt-2">
       <span class="opacity-50">Storage:</span> {{ storageDemo }}
+    </div>
+    <div v-if="pageAbstract">
+      <div>{{ pageAbstract?.title }}</div>
+      <div>{{ pageAbstract?.content }}</div>
     </div>
     <div class="mt-2">
       <ElButton @click="visible = true">

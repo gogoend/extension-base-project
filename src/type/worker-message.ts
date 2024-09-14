@@ -101,3 +101,16 @@ export class WorkerRequestAiSessionId extends WorkerBaseMessage {
     super()
   }
 }
+
+export interface SidepanelUpdateContextByPageContentPayload {
+  title: string
+  content: string
+}
+
+export class SidepanelUpdateContextByPageContent extends WorkerBaseMessage {
+  static tag = 'SidepanelUpdateContextByPageContent' as const
+  public messageType: string = 'SidepanelUpdateContextByPageContent'
+  public constructor(public payload: SidepanelUpdateContextByPageContentPayload) {
+    super()
+  }
+}

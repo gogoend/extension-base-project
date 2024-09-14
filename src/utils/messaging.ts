@@ -1,3 +1,5 @@
+import browser from 'webextension-polyfill'
+
 export function sendToBackground(message) {
   return browser.runtime.sendMessage({
     target: 'background',
@@ -39,9 +41,25 @@ export async function broadcastToAllTab(message) {
   return broadcastToTabs(tabIdList, message)
 }
 
-export function handleMessage(tag, handler) {
-  return browser.runtime.onMessage.addListener((message, sender) => {
-    if (message.message.messageType === tag)
+export function handleMessageFactory(
+  targetContext:
+    | 'background'
+    | 'popup'
+    | 'sidepanel'
+    | 'offscreen'
+    | 'tab',
+) {
+  return function handleMessage(tag, handler) {
+    const innerHandler = (message, sender) => {
+      if (
+        message.target !== targetContext
+        || message.message.messageType !== tag
+      )
+        return void 0
+
       return handler(message, sender)
-  })
+    }
+    browser.runtime.onMessage.addListener(innerHandler)
+    return () => browser.runtime.onMessage.removeListener(innerHandler)
+  }
 }
