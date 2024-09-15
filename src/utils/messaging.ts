@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill'
+import { v4 as uuid } from 'uuid'
 import { EnsureOffscreen } from '~/type/worker-message'
 
 export function sendToBackground(message) {
@@ -64,4 +65,41 @@ export function handleMessageFactory(
     browser.runtime.onMessage.addListener(innerHandler)
     return () => browser.runtime.onMessage.removeListener(innerHandler)
   }
+}
+
+export function getConnectName(tag, id) {
+  return [tag, id].join('@') as `${string}@${string}`
+}
+export function parseConnectName(name: string) {
+  return name.split('@')
+}
+export function sendToStreamResponsePort(message, { resolvePredict, rejectPredict, streamHandler } = {}) {
+  const port = browser.runtime.connect({ name: getConnectName(message.messageType, uuid()) })
+  port.postMessage(
+    message,
+  )
+  const responseDefer = Promise.withResolvers()
+  responseDefer.promise.finally(() => port.disconnect())
+  port.onMessage.addListener((message) => {
+    if (rejectPredict?.(message)) {
+      rejectPredict.reject(message)
+      return
+    }
+    if (resolvePredict?.(message)) {
+      responseDefer.resolve(message)
+      return
+    }
+    streamHandler?.(message)
+  })
+
+  return responseDefer.promise
+}
+export function handleStreamResponsePort(tag, handler) {
+  browser.runtime.onConnect.addListener((port) => {
+    const [portName, connectId] = parseConnectName(port.name)
+    if (portName !== tag || !connectId)
+      return
+
+    port.onMessage.addListener(handler)
+  })
 }

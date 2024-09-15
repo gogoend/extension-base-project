@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { v4 as uuid } from 'uuid'
 import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
-import { handleMessageFactory, sendToOffscreen } from '~/utils/messaging'
+import { handleMessageFactory, sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
 import {
   WorkerRequestAiSessionId,
   WorkerRequestStreamAi,
@@ -46,42 +46,35 @@ async function askAi() {
     }
   }
 
-  const responseDefer = Promise.withResolvers()
-
-  const connectId = uuid()
-  const port = browser.runtime.connect({ name: `${WorkerRequestStreamAi.tag}@${connectId}` })
-  port.postMessage(
-    new WorkerRequestStreamAi({
-      connectId,
-      sessionId: sessionId.value,
-      prompt: prompt.value,
-    }),
-  )
-
-  port.onMessage.addListener((message) => {
-    if (message.payload.index === 0)
-      aiResponse.value = ''
-
-    aiResponse.value += message.payload.text
-
-    if (message.payload.errorCode !== WorkerRequestStreamAiResponseErrorCode.NO_ERROR) {
-      responseDefer.reject(message.payload)
-      return
-    }
-    if (message.payload.index === -1)
-      responseDefer.resolve(message.payload)
-  })
-
   try {
     askLoading.value = true
-    await responseDefer.promise
+    await sendToStreamResponsePort(
+      new WorkerRequestStreamAi({
+        connectId: uuid(),
+        sessionId: sessionId.value,
+        prompt: prompt.value,
+      }),
+      {
+        streamHandler(message) {
+          if (message.payload.index === 0)
+            aiResponse.value = ''
+
+          aiResponse.value += message.payload.text
+        },
+        resolvePredict(message) {
+          return (message.payload.index === -1) && message.payload.errorCode === WorkerRequestStreamAiResponseErrorCode.NO_ERROR
+        },
+        rejectPredict(message) {
+          return message.payload.errorCode !== WorkerRequestStreamAiResponseErrorCode.NO_ERROR
+        },
+      },
+    )
   }
   catch (e) {
     hasError.value = true
   }
   finally {
     askLoading.value = false
-    port.disconnect()
   }
 }
 </script>
