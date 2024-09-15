@@ -16,7 +16,7 @@ const prompt = ref('')
 const aiResponse = ref('')
 const askLoading = ref(false)
 const hasError = ref(false)
-
+const sessionId = ref('')
 async function askAi() {
   if (askLoading.value) {
     currentInstance.proxy.$message({
@@ -36,13 +36,14 @@ async function askAi() {
   askLoading.value = true
   hasError.value = false
 
-  let sessionId
-  try {
-    sessionId = await sendToOffscreen(new WorkerRequestAiSessionId())
-  }
-  catch {
-    askLoading.value = false
-    return
+  if (!sessionId.value) {
+    try {
+      sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId())
+    }
+    catch {
+      askLoading.value = false
+      return
+    }
   }
 
   const responseDefer = Promise.withResolvers()
@@ -52,7 +53,7 @@ async function askAi() {
   port.postMessage(
     new WorkerRequestStreamAi({
       connectId,
-      sessionId,
+      sessionId: sessionId.value,
       prompt: prompt.value,
     }),
   )
