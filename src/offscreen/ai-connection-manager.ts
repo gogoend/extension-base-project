@@ -4,9 +4,13 @@ import type { WorkerRequestStreamAiRequestPayload, WorkerRequestStreamAiResponse
 
 const connectionMapById: Record<string, true> = {}
 
-type RequestPayload = WorkerRequestStreamAiRequestPayload
+type RequestPayload = WorkerRequestStreamAiRequestPayload & { connectId: string }
 type ResponsePayload = WorkerRequestStreamAiResponsePayload
 const ResponseErrorCode = WorkerRequestStreamAiResponseErrorCode
+interface CallbackMap {
+  streamingCallback?: (payload: ResponsePayload) => void
+  endCallback?: () => void
+}
 
 export async function startupPromptStream(
   {
@@ -14,20 +18,23 @@ export async function startupPromptStream(
     sessionId,
     prompt,
   }: RequestPayload,
-  callback: (payload: ResponsePayload) => void,
+  {
+    streamingCallback,
+    endCallback,
+  }: CallbackMap,
 ) {
   const session = await getSession(sessionId)
   connectionMapById[connectId] = true
   let index = 0
   let lastText = ''
 
+  const stream = session.promptStreaming(prompt) as ReadableStream<any>
   try {
-    for await (const text of session.promptStreaming(prompt)) {
+    for await (const text of stream) {
       if (!connectionMapById[connectId])
         return
 
-      callback({
-        connectId,
+      streamingCallback?.({
         text: text.substr(lastText.length),
         index,
         errorCode: ResponseErrorCode.NO_ERROR,
@@ -36,8 +43,7 @@ export async function startupPromptStream(
       lastText = text
     }
     index = -1
-    callback({
-      connectId,
+    streamingCallback?.({
       text: '',
       index,
       errorCode: ResponseErrorCode.NO_ERROR,
@@ -45,8 +51,7 @@ export async function startupPromptStream(
   }
   catch (error) {
     index = -1
-    callback({
-      connectId,
+    streamingCallback?.({
       text: '',
       index,
       errorCode: ResponseErrorCode.UNKNOWN_ERROR,
@@ -55,6 +60,7 @@ export async function startupPromptStream(
   }
   finally {
     delete connectionMapById[connectId]
+    endCallback?.()
   }
 }
 

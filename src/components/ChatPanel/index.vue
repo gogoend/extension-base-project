@@ -50,7 +50,6 @@ async function askAi() {
     askLoading.value = true
     await sendToStreamResponsePort(
       new WorkerRequestStreamAi({
-        connectId: uuid(),
         sessionId: sessionId.value,
         prompt: prompt.value,
       }),

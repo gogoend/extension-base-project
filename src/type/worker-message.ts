@@ -65,7 +65,6 @@ export enum WorkerRequestStreamAiResponseErrorCode {
 }
 
 export interface WorkerRequestStreamAiRequestPayload {
-  connectId: string
   sessionId: string
   prompt: string
 }
@@ -78,7 +77,6 @@ export class WorkerRequestStreamAi extends WorkerBaseMessage {
 }
 
 export interface WorkerRequestStreamAiResponsePayload {
-  connectId: string
   text: string
   index: number
   errorCode: WorkerRequestStreamAiResponseErrorCode

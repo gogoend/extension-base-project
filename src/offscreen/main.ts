@@ -1,4 +1,4 @@
-import { handleStreamResponsePort, sendToBackground, sendToTabById } from '../utils/messaging'
+import { handleStreamResponsePort, parseConnectName } from '../utils/messaging'
 import { startupPromptStream } from './ai-connection-manager'
 import { createSession } from './ai-sessiom-manager'
 import { handleMessageFactory } from '~/utils/messaging'
@@ -9,20 +9,24 @@ handleMessageFactory('offscreen')(WorkerRequestAiSessionId.tag, async () => {
 })
 
 handleStreamResponsePort(WorkerRequestStreamAi.tag, (message, port) => {
-  const { connectId, sessionId, prompt } = message.payload
+  const { sessionId, prompt } = message.payload
+  const [,connectId] = parseConnectName(port.name)
 
   startupPromptStream({
     connectId,
     sessionId,
     prompt,
-  }, (response) => {
-    port.postMessage(
-      new WorkerResponseStreamAi({
-        ...response,
-      }),
-    )
-    if (response.index === -1)
+  }, {
+    streamingCallback(response) {
+      port.postMessage(
+        new WorkerResponseStreamAi({
+          ...response,
+        }),
+      )
+    },
+    endCallback() {
       port.disconnect()
+    },
   })
 })
 
