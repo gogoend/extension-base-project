@@ -5,6 +5,7 @@ import { handleMessageFactory, sendToOffscreen } from '~/utils/messaging'
 import {
   WorkerRequestAiSessionId,
   WorkerRequestStreamAi,
+  WorkerRequestStreamAiResponseErrorCode,
   WorkerResponseStreamAi,
 } from '~/type/worker-message'
 import MarkdownContent from '~/components/MarkdownContent.vue'
@@ -45,26 +46,29 @@ async function askAi() {
   }
 
   const responseDefer = Promise.withResolvers()
-  sendToOffscreen(new WorkerRequestStreamAi({
-    connectId: uuid(),
-    sessionId,
-    prompt: prompt.value,
-  }))
 
-  const unListens = (['tab', 'sidepanel'] as const).map((context) => {
-    return handleMessageFactory(context)(WorkerResponseStreamAi.tag, ({ message }) => {
-      if (message.payload.index === 0)
-        aiResponse.value = ''
+  const connectId = uuid()
+  const port = browser.runtime.connect({ name: `${WorkerRequestStreamAi.tag}@${connectId}` })
+  port.postMessage(
+    new WorkerRequestStreamAi({
+      connectId,
+      sessionId,
+      prompt: prompt.value,
+    }),
+  )
 
-      aiResponse.value += message.payload.text
+  port.onMessage.addListener((message) => {
+    if (message.payload.index === 0)
+      aiResponse.value = ''
 
-      if (message.payload.errorCode !== 0) {
-        responseDefer.reject(message.payload)
-        return
-      }
-      if (message.payload.index === -1)
-        responseDefer.resolve(message.payload)
-    })
+    aiResponse.value += message.payload.text
+
+    if (message.payload.errorCode !== WorkerRequestStreamAiResponseErrorCode.NO_ERROR) {
+      responseDefer.reject(message.payload)
+      return
+    }
+    if (message.payload.index === -1)
+      responseDefer.resolve(message.payload)
   })
 
   try {
@@ -76,7 +80,7 @@ async function askAi() {
   }
   finally {
     askLoading.value = false
-    unListens.forEach(it => it())
+    port.disconnect()
   }
 }
 </script>
