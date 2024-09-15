@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import type { Component } from 'vue'
 import Vue from 'vue'
 import { debounce } from 'lodash-es'
@@ -7,7 +6,8 @@ import type Browser from 'webextension-polyfill'
 import { initCsuiStyle } from '../csui-style'
 import { mittBus } from './mittBus'
 
-import { WorkerGetLocalStorage } from '~/type/worker-message'
+import { ContentScriptTabPrev, WorkerGetLocalStorage } from '~/type/worker-message'
+import { handleMessageFactory, sendToBackground } from '~/utils/messaging'
 
 const defaultMountConfig = {
   mounter: (containerEl: Element) => {
@@ -43,8 +43,8 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
 console.info('[vitesse-webext] Hello world from content script')
 
 // communication example: send previous tab title from background page
-onMessage('tab-prev', ({ data }) => {
-  console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
+handleMessageFactory('tab')(ContentScriptTabPrev.tag, ({ message }) => {
+  console.log(`[vitesse-webext] Navigate from page "${message.payload.title}"`)
 })
 
 interface MountFuncReturnType {
@@ -183,7 +183,7 @@ export async function mountWithLifeCycle({ mount, disableKeyInLocalStorage }: {
     // 记录一下上一次的禁用状态
     let lastDisableStatus = false
 
-    const localStorage = await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage())
+    const localStorage = await sendToBackground(new WorkerGetLocalStorage())
     lastDisableStatus = !!localStorage[disableKeyInLocalStorage]
 
     if (
@@ -192,7 +192,7 @@ export async function mountWithLifeCycle({ mount, disableKeyInLocalStorage }: {
       disposeCsui = await mount()
     // 处理同一时间内多次启用 / 禁用 切换的情况 - 以最后一次为准
     const handleEnableStateMayChange = debounce(async () => {
-      const localStorage = await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage())
+      const localStorage = await sendToBackground(new WorkerGetLocalStorage())
       if (localStorage[disableKeyInLocalStorage] === true) {
         disposeCsui?.()
         disposeCsui = undefined
@@ -207,7 +207,7 @@ export async function mountWithLifeCycle({ mount, disableKeyInLocalStorage }: {
     mittBus.on('local-storage-change', async (changes: Browser.Storage.StorageAreaOnChangedChangesType) => {
       // 本地存储发生变化，如果包含了disableKeyInLocalStorage的变化，则重新从本地存储取最新值
       // 不使用changes，是因为这个状态可能不是最新的
-      if (!Object.hasOwn(changes.data.payload, disableKeyInLocalStorage))
+      if (!Object.hasOwn(changes, disableKeyInLocalStorage))
         return
 
       handleEnableStateMayChange()

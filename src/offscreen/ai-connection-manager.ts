@@ -35,6 +35,13 @@ export async function startupPromptStream(
       index++
       lastText = text
     }
+    index = -1
+    callback({
+      connectId,
+      text: '',
+      index,
+      errorCode: ResponseErrorCode.NO_ERROR,
+    })
   }
   catch (error) {
     index = -1
@@ -45,17 +52,10 @@ export async function startupPromptStream(
       errorCode: ResponseErrorCode.UNKNOWN_ERROR,
       errorContent: error,
     })
-    return
   }
-
-  index = -1
-  callback({
-    connectId,
-    text: '',
-    index,
-    errorCode: ResponseErrorCode.NO_ERROR,
-  })
-  delete connectionMapById[connectId]
+  finally {
+    delete connectionMapById[connectId]
+  }
 }
 
 export async function stopPromptStream(connectId: string) {

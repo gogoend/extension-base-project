@@ -1,10 +1,9 @@
-import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
-import { v4 as uuid } from 'uuid'
 import { requestForHandleContentScript } from './utils/request'
-import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
+import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, ContentScriptTabPrev, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetCurrentTab, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
+import { broadcastToAllTabs, handleMessageFactory, sendToSidepanel, sendToTabById } from '~/utils/messaging'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -60,14 +59,13 @@ browser.tabs.onActivated.addListener(async ({ tabId }) => {
 
   // eslint-disable-next-line no-console
   console.log('previous tab', tab)
-  sendMessage(
-    'tab-prev',
-    { title: tab.title },
-    { context: 'content-script', tabId },
+  sendToTabById(
+    tabId,
+    new ContentScriptTabPrev({ title: tab.title }),
   )
 })
 
-onMessage('get-current-tab', async () => {
+handleMessageFactory('background')(WorkerGetCurrentTab.tag, async () => {
   try {
     const tab = await browser.tabs.get(previousTabId)
     return {
@@ -81,17 +79,17 @@ onMessage('get-current-tab', async () => {
   }
 })
 
-onMessage(
+handleMessageFactory('background')(
   WorkerAliveDetectMessage.tag,
   async () => {
     return true
   },
 )
 
-onMessage(
+handleMessageFactory('background')(
   WorkerRequestMessage.tag,
-  async (message) => {
-    const { axiosConf = {} } = message.data
+  async ({ message }, _sender) => {
+    const { axiosConf = {} } = message
     const {
       transformRequest: _transformRequest,
       transformResponse: _transformResponse,
@@ -102,31 +100,21 @@ onMessage(
   },
 )
 
-onMessage(
+handleMessageFactory('background')(
   WorkerGetLocalStorage.tag,
   async () => {
     return browser.storage.local.get()
   },
 )
-onMessage(
+handleMessageFactory('background')(
   WorkerUpdateLocalStorage.tag,
-  async (message) => {
-    await browser.storage.local.set(message.data.payload)
+  async ({ message }) => {
+    await browser.storage.local.set(message.payload)
     return true
   },
 )
 browser.storage.local.onChanged.addListener(async (changes) => {
-  const tabs = await browser.tabs.query({})
-
-  tabs.forEach((tab) => {
-    if (typeof tab.id !== 'number')
-      return
-
-    sendMessage(WorkerLocalStorageChanged.tag, new WorkerLocalStorageChanged(changes), {
-      context: 'content-script',
-      tabId: tab.id,
-    })
-  })
+  broadcastToAllTabs(new WorkerLocalStorageChanged(changes))
 })
 
 function installScript(tab: any) {
@@ -146,7 +134,7 @@ function installScript(tab: any) {
 const installedTabIdSet = new Set<number>()
 browser.tabs.onActivated.addListener(async (tab) => {
   try {
-    await browser.tabs.sendMessage(
+    await sendToTabById(
       tab.tabId,
       new ContentScriptAliveDetectMessage(),
     )
@@ -201,34 +189,18 @@ async function setupOffscreenDocument() {
   }
 }
 
-onMessage(WorkerRequestAiSessionId.tag, async () => {
-  await setupOffscreenDocument()
-  return await browser.runtime.sendMessage({
-    target: 'offscreen',
-    data: new WorkerRequestAiSessionId(),
-  })
+handleMessageFactory('background')(EnsureOffscreen.tag, async () => {
+  return await setupOffscreenDocument()
 })
 
-onMessage(WorkerRequestStreamAi.tag, async (event) => {
-  await setupOffscreenDocument()
-
-  const { connectId, sessionId, prompt } = event.data.payload
-  browser.runtime.sendMessage({
-    target: 'offscreen',
-    data: new WorkerRequestStreamAi({
-      connectId,
-      sessionId,
-      prompt,
-      __internal__sender: event.sender,
-    }),
-  })
-})
-
-browser.runtime.onMessage.addListener((message) => {
-  if (message.messageType !== WorkerResponseStreamAi.tag)
-    return
-
-  const { __internal__sender } = message.payload
-  delete message.payload.__internal__sender
-  sendMessage(WorkerResponseStreamAi.tag, new WorkerResponseStreamAi(message.payload), __internal__sender)
+handleMessageFactory('background')(BackgroundRelayOffscreenMessageToSender.tag, ({ message }) => {
+  if (message.payload.sender.tab) {
+    sendToTabById(
+      message.payload.sender.tab.id,
+      message.payload.message,
+    )
+  }
+  else {
+    sendToSidepanel(message.payload.message)
+  }
 })

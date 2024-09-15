@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import { WorkerGetLocalStorage } from '../type/worker-message'
+import { sendToBackground } from '../utils/messaging'
 import { storageDemo } from '~/logic/storage'
+
+sendToBackground(new WorkerGetLocalStorage()).then((_res) => {
+})
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage()

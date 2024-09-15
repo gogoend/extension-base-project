@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import CloseConfirm from '../contentScripts/views/components/CloseConfirm.vue'
 import mountElDialogAsApp from '../utils/mount-el-dialog-as-app'
+import ChatPanel from '~/components/ChatPanel/index.vue'
+import { handleMessageFactory } from '~/utils/messaging'
 import { storageDemo } from '~/logic/storage'
+import { SidepanelUpdateContextByPageContent } from '~/type/worker-message'
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage()
@@ -18,10 +21,16 @@ function handleImperativeDialog() {
     })
     .catch(() => void 0)
 }
+
+const pageAbstract = ref(null)
+const cancelPageContentUpdateListen = handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, (message) => {
+  pageAbstract.value = message.message.payload
+})
+onUnmounted(cancelPageContentUpdateListen)
 </script>
 
 <template>
-  <main class="w-full px-4 py-5 text-center text-gray-700">
+  <main class="px-4 py-5 text-gray-700">
     <Logo />
     <div>Sidepanel</div>
     <SharedSubtitle />
@@ -32,6 +41,10 @@ function handleImperativeDialog() {
     <div class="mt-2">
       <span class="opacity-50">Storage:</span> {{ storageDemo }}
     </div>
+    <div v-if="pageAbstract">
+      <div>{{ pageAbstract?.title }}</div>
+      <div>{{ pageAbstract?.content }}</div>
+    </div>
     <div class="mt-2">
       <ElButton @click="visible = true">
         声明式对话框测试
@@ -41,5 +54,7 @@ function handleImperativeDialog() {
       </ElButton>
     </div>
     <CloseConfirm :visible.sync="visible" />
+
+    <ChatPanel />
   </main>
 </template>
