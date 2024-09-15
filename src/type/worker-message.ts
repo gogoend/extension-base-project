@@ -1,8 +1,8 @@
-import type { AxiosRequestConfig } from 'axios'
+import type { AxiosPromise, AxiosRequestConfig } from 'axios'
 import type Browser from 'webextension-polyfill'
 
 export abstract class WorkerBaseMessage {
-  public abstract messageType: string
+  public abstract messageType: keyof MessagingResponseTypeMap
 }
 
 /**
@@ -10,7 +10,12 @@ export abstract class WorkerBaseMessage {
  */
 export class WorkerAliveDetectMessage extends WorkerBaseMessage {
   static tag = 'WorkerAliveDetectMessage' as const
-  public messageType: string = 'WorkerAliveDetectMessage'
+  public readonly messageType = 'WorkerAliveDetectMessage'
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerAliveDetectMessage.tag]: void
+  }
 }
 
 /**
@@ -18,7 +23,12 @@ export class WorkerAliveDetectMessage extends WorkerBaseMessage {
  */
 export class ContentScriptAliveDetectMessage extends WorkerBaseMessage {
   static tag = 'ContentScriptAliveDetectMessage' as const
-  public messageType: string = 'ContentScriptAliveDetectMessage'
+  public readonly messageType = 'ContentScriptAliveDetectMessage'
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [ContentScriptAliveDetectMessage.tag]: void
+  }
 }
 
 /**
@@ -26,33 +36,53 @@ export class ContentScriptAliveDetectMessage extends WorkerBaseMessage {
  */
 export class WorkerRequestMessage extends WorkerBaseMessage {
   static tag = 'WorkerRequestMessage' as const
-  public messageType: string = 'WorkerRequestMessage'
+  public readonly messageType = 'WorkerRequestMessage'
   public constructor(public axiosConf: AxiosRequestConfig) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerRequestMessage.tag]: AxiosPromise
   }
 }
 
 export class WorkerGetLocalStorage extends WorkerBaseMessage {
   static tag = 'WorkerGetLocalStorage' as const
-  public messageType: string = 'WorkerGetLocalStorage'
+  public readonly messageType = 'WorkerGetLocalStorage' as const
   public constructor() {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerGetLocalStorage.tag]: Record<string, any>
   }
 }
 
 export class WorkerUpdateLocalStorage extends WorkerBaseMessage {
   static tag = 'WorkerUpdateLocalStorage' as const
-  public messageType: string = 'WorkerUpdateLocalStorage'
+  public readonly messageType = 'WorkerUpdateLocalStorage'
   public constructor(public payload: any) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerUpdateLocalStorage.tag]: unknown
   }
 }
 
 export class WorkerLocalStorageChanged extends WorkerBaseMessage {
   static tag = 'WorkerLocalStorageChanged' as const
-  public messageType: string = 'WorkerLocalStorageChanged'
+  public readonly messageType = 'WorkerLocalStorageChanged'
   public constructor(public payload: Browser.Storage.StorageAreaOnChangedChangesType) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerLocalStorageChanged.tag]: void
   }
 }
 
@@ -70,9 +100,14 @@ export interface WorkerRequestStreamAiRequestPayload {
 }
 export class WorkerRequestStreamAi extends WorkerBaseMessage {
   static tag = 'WorkerRequestStreamAi' as const
-  public messageType: string = 'WorkerRequestStreamAi'
+  public readonly messageType = 'WorkerRequestStreamAi'
   public constructor(public payload: WorkerRequestStreamAiRequestPayload) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerRequestStreamAi.tag]: void
   }
 }
 
@@ -84,17 +119,27 @@ export interface WorkerRequestStreamAiResponsePayload {
 }
 export class WorkerResponseStreamAi extends WorkerBaseMessage {
   static tag = 'WorkerResponseStreamAi' as const
-  public messageType: string = 'WorkerResponseStreamAi'
+  public readonly messageType = 'WorkerResponseStreamAi'
   public constructor(public payload: WorkerRequestStreamAiResponsePayload) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerResponseStreamAi.tag]: void
   }
 }
 
 export class WorkerRequestAiSessionId extends WorkerBaseMessage {
   static tag = 'WorkerRequestAiSessionId' as const
-  public messageType: string = 'WorkerRequestAiSessionId'
+  public readonly messageType = 'WorkerRequestAiSessionId'
   public constructor() {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerRequestAiSessionId.tag]: void
   }
 }
 
@@ -105,15 +150,25 @@ export interface SidepanelUpdateContextByPageContentPayload {
 
 export class SidepanelUpdateContextByPageContent extends WorkerBaseMessage {
   static tag = 'SidepanelUpdateContextByPageContent' as const
-  public messageType: string = 'SidepanelUpdateContextByPageContent'
+  public readonly messageType = 'SidepanelUpdateContextByPageContent'
   public constructor(public payload: SidepanelUpdateContextByPageContentPayload) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [SidepanelUpdateContextByPageContent.tag]: void
   }
 }
 
 export class EnsureOffscreen extends WorkerBaseMessage {
   static tag = 'EnsureOffscreen' as const
-  public messageType: string = 'EnsureOffscreen'
+  public readonly messageType = 'EnsureOffscreen'
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [EnsureOffscreen.tag]: void
+  }
 }
 export interface BackgroundRelayOffscreenMessageToSenderPayload<T = WorkerResponseStreamAi> {
   sender: Browser.Runtime.MessageSender
@@ -121,26 +176,42 @@ export interface BackgroundRelayOffscreenMessageToSenderPayload<T = WorkerRespon
 }
 export class BackgroundRelayOffscreenMessageToSender extends WorkerBaseMessage {
   static tag = 'BackgroundRelayOffscreenMessageToSender' as const
-  public messageType: string = 'BackgroundRelayOffscreenMessageToSender'
+  public readonly messageType = 'BackgroundRelayOffscreenMessageToSender'
   public constructor(public payload: BackgroundRelayOffscreenMessageToSenderPayload) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [BackgroundRelayOffscreenMessageToSender.tag]: any
   }
 }
 
 export class WorkerGetCurrentTab extends WorkerBaseMessage {
   static tag = 'WorkerGetCurrentTab' as const
-  public messageType: string = 'WorkerGetCurrentTab'
+  public readonly messageType = 'WorkerGetCurrentTab'
   public constructor() {
     super()
   }
 }
+declare global {
+  interface MessagingResponseTypeMap {
+    [WorkerGetCurrentTab.tag]: any
+  }
+}
+
 export interface ContentScriptTabPrevPayload {
   title?: string
 }
 export class ContentScriptTabPrev extends WorkerBaseMessage {
   static tag = 'ContentScriptTabPrev' as const
-  public messageType: string = 'ContentScriptTabPrev'
+  public readonly messageType = 'ContentScriptTabPrev'
   public constructor(public payload: ContentScriptTabPrevPayload) {
     super()
+  }
+}
+declare global {
+  interface MessagingResponseTypeMap {
+    [ContentScriptTabPrev.tag]: any
   }
 }

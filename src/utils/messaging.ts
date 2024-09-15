@@ -1,8 +1,9 @@
 import browser from 'webextension-polyfill'
 import { v4 as uuid } from 'uuid'
-import { EnsureOffscreen } from '~/type/worker-message'
+import type Browser from 'webextension-polyfill'
+import * as WorkerMessage from '~/type/worker-message'
 
-export function sendToBackground(message) {
+export function sendToBackground<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<MessagingResponseTypeMap[T['messageType']]> {
   return browser.runtime.sendMessage({
     target: 'background',
     message,
@@ -24,7 +25,7 @@ export function sendToSidepanel(message) {
 }
 
 export async function sendToOffscreen(message) {
-  await sendToBackground(new EnsureOffscreen())
+  await sendToBackground(new WorkerMessage.EnsureOffscreen())
   return browser.runtime.sendMessage({
     target: 'offscreen',
     message,
@@ -53,7 +54,7 @@ export function handleMessageFactory(
     | 'tab',
 ) {
   return function handleMessage(tag, handler) {
-    const innerHandler = (message, sender) => {
+    const innerHandler = (message, sender: Browser.Runtime.MessageSender) => {
       if (
         message.target !== targetContext
         || message.message.messageType !== tag
