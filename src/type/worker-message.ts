@@ -128,3 +128,21 @@ export class BackgroundRelayOffscreenMessageToSender extends WorkerBaseMessage {
     super()
   }
 }
+
+export class WorkerGetCurrentTab extends WorkerBaseMessage {
+  static tag = 'WorkerGetCurrentTab' as const
+  public messageType: string = 'WorkerGetCurrentTab'
+  public constructor() {
+    super()
+  }
+}
+export interface ContentScriptTabPrevPayload {
+  title?: string
+}
+export class ContentScriptTabPrev extends WorkerBaseMessage {
+  static tag = 'ContentScriptTabPrev' as const
+  public messageType: string = 'ContentScriptTabPrev'
+  public constructor(public payload: ContentScriptTabPrevPayload) {
+    super()
+  }
+}

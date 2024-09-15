@@ -1,10 +1,9 @@
-import { onMessage, sendMessage } from 'webext-bridge/background'
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
 import { requestForHandleContentScript } from './utils/request'
-import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
+import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, ContentScriptTabPrev, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetCurrentTab, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
-import { broadcastToAllTabs, handleMessageFactory, sendToBackground, sendToSidepanel, sendToTabById } from '~/utils/messaging'
+import { broadcastToAllTabs, handleMessageFactory, sendToSidepanel, sendToTabById } from '~/utils/messaging'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -60,14 +59,13 @@ browser.tabs.onActivated.addListener(async ({ tabId }) => {
 
   // eslint-disable-next-line no-console
   console.log('previous tab', tab)
-  sendMessage(
-    'tab-prev',
-    { title: tab.title },
-    { context: 'content-script', tabId },
+  sendToTabById(
+    tabId,
+    new ContentScriptTabPrev({ title: tab.title }),
   )
 })
 
-onMessage('get-current-tab', async () => {
+handleMessageFactory('background')(WorkerGetCurrentTab.tag, async () => {
   try {
     const tab = await browser.tabs.get(previousTabId)
     return {

@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import { onMessage } from 'webext-bridge/content-script'
 import type { Component } from 'vue'
 import Vue from 'vue'
 import { debounce } from 'lodash-es'
@@ -7,8 +6,8 @@ import type Browser from 'webextension-polyfill'
 import { initCsuiStyle } from '../csui-style'
 import { mittBus } from './mittBus'
 
-import { WorkerGetLocalStorage } from '~/type/worker-message'
-import { sendToBackground } from '~/utils/messaging'
+import { ContentScriptTabPrev, WorkerGetLocalStorage } from '~/type/worker-message'
+import { handleMessageFactory, sendToBackground } from '~/utils/messaging'
 
 const defaultMountConfig = {
   mounter: (containerEl: Element) => {
@@ -44,8 +43,8 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
 console.info('[vitesse-webext] Hello world from content script')
 
 // communication example: send previous tab title from background page
-onMessage('tab-prev', ({ data }) => {
-  console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
+handleMessageFactory('tab')(ContentScriptTabPrev.tag, ({ message }) => {
+  console.log(`[vitesse-webext] Navigate from page "${message.payload.title}"`)
 })
 
 interface MountFuncReturnType {
