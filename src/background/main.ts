@@ -4,7 +4,7 @@ import uaParser from 'ua-parser-js'
 import { requestForHandleContentScript } from './utils/request'
 import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
-import { handleMessageFactory, sendToSidepanel, sendToTabById } from '~/utils/messaging'
+import { broadcastToAllTabs, handleMessageFactory, sendToBackground, sendToSidepanel, sendToTabById } from '~/utils/messaging'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -81,7 +81,7 @@ onMessage('get-current-tab', async () => {
   }
 })
 
-onMessage(
+handleMessageFactory('background')(
   WorkerAliveDetectMessage.tag,
   async () => {
     return true
@@ -102,31 +102,21 @@ handleMessageFactory('background')(
   },
 )
 
-onMessage(
+handleMessageFactory('background')(
   WorkerGetLocalStorage.tag,
   async () => {
     return browser.storage.local.get()
   },
 )
-onMessage(
+handleMessageFactory('background')(
   WorkerUpdateLocalStorage.tag,
-  async (message) => {
-    await browser.storage.local.set(message.data.payload)
+  async ({ message }) => {
+    await browser.storage.local.set(message.payload)
     return true
   },
 )
 browser.storage.local.onChanged.addListener(async (changes) => {
-  const tabs = await browser.tabs.query({})
-
-  tabs.forEach((tab) => {
-    if (typeof tab.id !== 'number')
-      return
-
-    sendMessage(WorkerLocalStorageChanged.tag, new WorkerLocalStorageChanged(changes), {
-      context: 'content-script',
-      tabId: tab.id,
-    })
-  })
+  broadcastToAllTabs(new WorkerLocalStorageChanged(changes))
 })
 
 function installScript(tab: any) {
@@ -146,7 +136,7 @@ function installScript(tab: any) {
 const installedTabIdSet = new Set<number>()
 browser.tabs.onActivated.addListener(async (tab) => {
   try {
-    await browser.tabs.sendMessage(
+    await sendToTabById(
       tab.tabId,
       new ContentScriptAliveDetectMessage(),
     )

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
-import { v4 as uuid } from 'uuid'
 import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
-import { sendToOffscreen } from '../../utils/messaging'
+import { sendToBackground } from '../../utils/messaging'
 import CloseConfirm from './components/CloseConfirm.vue'
 import request from '~/contentScripts/utils/request'
 import {
@@ -26,12 +25,12 @@ async function handleCloseClick() {
     .then(async (closeScope) => {
       currentInstance.proxy.$root.$disposeCsui()
       if (closeScope === 2) {
-        let localStorage = (await sendMessage(WorkerGetLocalStorage.tag, new WorkerGetLocalStorage()))
+        let localStorage = (await sendToBackground(new WorkerGetLocalStorage()))
         localStorage = {
           ...localStorage,
           searchEngineEnhanceDisabled: true,
         }
-        await sendMessage(WorkerUpdateLocalStorage.tag, new WorkerUpdateLocalStorage(localStorage))
+        await sendToBackground(new WorkerUpdateLocalStorage(localStorage))
       }
     })
     .catch(() => void 0)

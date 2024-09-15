@@ -1,7 +1,7 @@
 import { throttle } from 'lodash-es'
-import { onMessage, sendMessage } from 'webext-bridge/content-script'
 import { mittBus } from './utils/mittBus'
 import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage } from '~/type/worker-message'
+import { handleMessageFactory, sendToBackground } from '~/utils/messaging'
 
 const aliveDetect = throttle(async (ev?: FocusEvent | Event) => {
   if (ev && ev.type === 'visibilitychange' && document.visibilityState !== 'visible')
@@ -9,7 +9,7 @@ const aliveDetect = throttle(async (ev?: FocusEvent | Event) => {
 
   // 页面变为可见状态时执行的操作
   try {
-    await sendMessage(WorkerAliveDetectMessage.tag, new WorkerAliveDetectMessage())
+    await sendToBackground(new WorkerAliveDetectMessage())
   }
   catch (err) {
     if (err.message?.includes('Extension context invalidated')) {
@@ -44,7 +44,9 @@ mittBus.on('extension-background-destroyed', () => {
   disposeTimer()
 })
 
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.messageType === ContentScriptAliveDetectMessage.tag)
-    sendResponse()
-})
+handleMessageFactory('tab')(
+  ContentScriptAliveDetectMessage.tag,
+  () => {
+    return true
+  },
+)

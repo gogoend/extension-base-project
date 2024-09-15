@@ -9,11 +9,11 @@ import ElementUI from 'element-ui'
 import VueDOMPurifyHTML from 'vue-dompurify-html'
 import Vue from 'vue'
 
-import { onMessage } from 'webext-bridge/content-script'
 import { bodyLevelElement, initBodyLevelElement } from './body-level-element'
 import { mittBus } from './utils/mittBus'
 import { WorkerLocalStorageChanged } from '~/type/worker-message'
 import { setupApp } from '~/logic/common-setup'
+import { handleMessageFactory } from '~/utils/messaging'
 
 Vue.use(ElementUI, {
   bodyLevelElement,
@@ -32,8 +32,8 @@ if (!csHaveRunFlag) {
     document.body.removeAttribute('data-gogoend-injected')
   })
 
-  onMessage(WorkerLocalStorageChanged.tag, (changes) => {
-    mittBus.emit('local-storage-change', changes)
+  handleMessageFactory('tab')(WorkerLocalStorageChanged.tag, ({ message }) => {
+    mittBus.emit('local-storage-change', message.payload)
   })
 
   ;(async () => {

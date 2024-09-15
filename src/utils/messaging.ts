@@ -38,9 +38,9 @@ export function broadcastToTabs(tabIdList: number[], message) {
   return Promise.allSettled(tabIdList.map(tabId => sendToTabById(tabId, message)))
 }
 
-export async function broadcastToAllTab(message) {
-  const tabIdList = await browser.tabs.query({})
-  return broadcastToTabs(tabIdList, message)
+export async function broadcastToAllTabs(message) {
+  const tabIdList = await browser.tabs.query({}) ?? []
+  return broadcastToTabs(tabIdList.map(it => it.id).filter(it => typeof it === 'number'), message)
 }
 
 export function handleMessageFactory(
