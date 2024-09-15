@@ -15,6 +15,7 @@ const prompt = ref('')
 const aiResponse = ref('')
 const askLoading = ref(false)
 const hasError = ref(false)
+
 async function askAi() {
   if (askLoading.value) {
     currentInstance.proxy.$message({
@@ -43,26 +44,40 @@ async function askAi() {
     return
   }
 
+  const responseDefer = Promise.withResolvers()
   sendToOffscreen(new WorkerRequestStreamAi({
     connectId: uuid(),
     sessionId,
     prompt: prompt.value,
   }))
 
-  ;(['tab', 'sidepanel'] as const).forEach((context) => {
-    handleMessageFactory(context)(WorkerResponseStreamAi.tag, ({ message }) => {
+  const unListens = (['tab', 'sidepanel'] as const).map((context) => {
+    return handleMessageFactory(context)(WorkerResponseStreamAi.tag, ({ message }) => {
       if (message.payload.index === 0)
         aiResponse.value = ''
 
       aiResponse.value += message.payload.text
 
-      if (message.payload.index === -1) {
-        askLoading.value = false
-        if (message.payload.errorCode !== 0)
-          hasError.value = true
+      if (message.payload.errorCode !== 0) {
+        responseDefer.reject(message.payload)
+        return
       }
+      if (message.payload.index === -1)
+        responseDefer.resolve(message.payload)
     })
   })
+
+  try {
+    askLoading.value = true
+    await responseDefer.promise
+  }
+  catch (e) {
+    hasError.value = true
+  }
+  finally {
+    askLoading.value = false
+    unListens.forEach(it => it())
+  }
 }
 </script>
 
