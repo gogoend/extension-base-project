@@ -124,24 +124,30 @@ async function askAi(content: string) {
 }
 
 initNewSession()
+
+const isInputFocusing = ref(false)
 </script>
 
 <template>
   <div class="chat-panel">
     <MessageList v-if="messageList.length" class="chat-panel__message-list" :message-list="messageList" />
     <SuggestCard v-else class="chat-panel__suggest-list" @send-query="handleSendQuery" />
-    <ElButton @click="initNewSession">
-      新会话
-    </ElButton>
-    <form class="submit-area" @submit.prevent="handleSendClick">
-      <ElInput v-model="prompt" type="textarea" />
-      <div>
-        <ElButton type="primary" :loading="askLoading" @click="handleSendClick">
-          问Ai
-        </ElButton>
-        <ElButton :disabled="!chatCanceller" @click="chatCanceller?.()">
-          停止回答
-        </ElButton>
+    <div class="toolbar">
+      <ElButton size="mini" type="text" :disabled="!messageList.length" @click="initNewSession">
+        <i class="el-icon-brush" /> 新会话
+      </ElButton>
+    </div>
+    <form class="submit-area" :class="{ 'submit-area--focusing': isInputFocusing }" @submit.prevent="handleSendClick">
+      <div class="main-wrap">
+        <ElInput v-model="prompt" class="query-input" type="textarea" @focus="isInputFocusing = true" @blur="isInputFocusing = false" />
+        <div class="operation-button-wrap">
+          <ElButton v-if="!askLoading" size="mini" type="primary" :loading="askLoading" @click="handleSendClick">
+            问Ai
+          </ElButton>
+          <ElButton v-else size="mini" @click="chatCanceller?.()">
+            停止
+          </ElButton>
+        </div>
       </div>
     </form>
   </div>
@@ -166,6 +172,46 @@ initNewSession()
   }
   .submit-area {
     width: 100%;
+    margin: 0 auto;
+    .query-input {
+      &::v-deep(.el-textarea__inner) {
+        border: 0;
+        resize: none;
+        border-radius: 0;
+      }
+    }
+    .operation-button-wrap {
+      width: 100%;
+      background-color: #fafafa;
+      display: flex;
+      justify-content: flex-end;
+    }
+    position: relative;
+    &::before {
+      content: '';
+      display: block;
+      position: absolute;
+      inset: 0px;
+      background-color: rgb(235, 235, 235);
+      z-index: -1;
+      border-radius: 8px;
+    }
+    &.submit-area--focusing, &:focus-within{
+      &::before {
+        content: '';
+        background-color: transparent;
+        background-image: linear-gradient(45deg, #2af8e0, #00f, #ff9bf0);
+      }
+    }
+    .main-wrap {
+      border-radius: 6px;
+      overflow: hidden;
+      width: calc(100% - 4px);
+      height: calc(100% - 4px);
+      position: relative;
+      left: 2px;
+      top: 2px;
+    }
   }
 }
 </style>

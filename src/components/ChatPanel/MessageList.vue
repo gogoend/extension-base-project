@@ -49,7 +49,7 @@ defineProps({
   display: flex;
   flex-direction: column;
   .message-item {
-    max-width: calc(100% - 80px);
+    max-width: calc(100% - 32px);
     width: fit-content;
     padding: 10px 16px;
     margin-bottom: 20px;
