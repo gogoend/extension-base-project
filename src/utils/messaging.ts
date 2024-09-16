@@ -111,6 +111,11 @@ export function parseConnectName(name: string) {
 interface StreamMessageHandler<T> {
   (message: T): void
 }
+
+export class WorkerStopStreamPort extends WorkerMessage.WorkerBaseMessage {
+  static tag = 'WorkerStopStreamPort' as const
+  public readonly messageType = 'WorkerStopStreamPort'
+}
 export function sendToStreamResponsePort<
   T extends WorkerMessage.WorkerBaseMessage,
   U = ResponseForMessage<T>,
@@ -126,7 +131,8 @@ export function sendToStreamResponsePort<
     streamHandler?: StreamMessageHandler<U>
   } = {},
 ) {
-  const port = browser.runtime.connect({ name: getConnectName(message.messageType, uuid()) })
+  const connectId = uuid()
+  const port = browser.runtime.connect({ name: getConnectName(message.messageType, connectId) })
   port.postMessage(
     message,
   )
@@ -144,11 +150,17 @@ export function sendToStreamResponsePort<
     streamHandler?.(message)
   })
 
-  return responseDefer.promise
+  return {
+    promise: responseDefer.promise,
+    cancel: async () => {
+      port.postMessage(new WorkerStopStreamPort())
+      responseDefer.reject('CANCELLED')
+    },
+  }
 }
 export function handleStreamResponsePort<T extends keyof MessagingResponseTypeMap>(
   tag: T,
-  handler: (message: MessageTypeMap[T], port: Browser.Runtime.Port) => void,
+  handler: (message: MessageTypeMap[T] | WorkerStopStreamPort, port: Browser.Runtime.Port) => void,
 ) {
   browser.runtime.onConnect.addListener((port) => {
     const [portName, connectId] = parseConnectName(port.name)

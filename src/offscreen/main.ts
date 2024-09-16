@@ -1,5 +1,5 @@
-import { handleStreamResponsePort, parseConnectName } from '../utils/messaging'
-import { startupPromptStream } from './ai-connection-manager'
+import { WorkerStopStreamPort, handleStreamResponsePort, parseConnectName } from '../utils/messaging'
+import { startupPromptStream, stopPromptStream } from './ai-connection-manager'
 import { createSession } from './ai-session-manager'
 import { handleMessageFactory } from '~/utils/messaging'
 import { WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi } from '~/type/worker-message'
@@ -9,25 +9,32 @@ handleMessageFactory('offscreen')(WorkerRequestAiSessionId.tag, async () => {
 })
 
 handleStreamResponsePort(WorkerRequestStreamAi.tag, (message, port) => {
-  const { sessionId, prompt } = message.payload
   const [,connectId] = parseConnectName(port.name)
-
-  startupPromptStream({
-    connectId,
-    sessionId,
-    prompt,
-  }, {
-    streamingCallback(response) {
-      port.postMessage(
-        new WorkerResponseStreamAi({
-          ...response,
-        }),
-      )
-    },
-    endCallback() {
-      port.disconnect()
-    },
-  })
+  switch (message.messageType) {
+    case WorkerRequestStreamAi.tag: {
+      const { sessionId, prompt } = message.payload
+      startupPromptStream({
+        connectId,
+        sessionId,
+        prompt,
+      }, {
+        streamingCallback(response) {
+          port.postMessage(
+            new WorkerResponseStreamAi({
+              ...response,
+            }),
+          )
+        },
+        endCallback() {
+          port.disconnect()
+        },
+      })
+      break
+    }
+    case WorkerStopStreamPort.tag: {
+      return stopPromptStream(connectId)
+    }
+  }
 })
 
 export default {}
