@@ -1,4 +1,4 @@
-import { getSession } from './ai-sessiom-manager'
+import { getSession } from './ai-session-manager'
 import { WorkerRequestStreamAiResponseErrorCode } from '~/type/worker-message'
 import type { WorkerRequestStreamAiRequestPayload, WorkerRequestStreamAiResponsePayload } from '~/type/worker-message'
 

@@ -1,6 +1,6 @@
 import { handleStreamResponsePort, parseConnectName } from '../utils/messaging'
 import { startupPromptStream } from './ai-connection-manager'
-import { createSession } from './ai-sessiom-manager'
+import { createSession } from './ai-session-manager'
 import { handleMessageFactory } from '~/utils/messaging'
 import { WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi } from '~/type/worker-message'
 
