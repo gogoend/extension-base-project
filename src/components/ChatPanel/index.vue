@@ -1,23 +1,29 @@
 <script setup lang="ts">
-import { v4 as uuid } from 'uuid'
 import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
-import { handleMessageFactory, sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
+import MessageList from './MessageList.vue'
+import { sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
 import {
   WorkerRequestAiSessionId,
   WorkerRequestStreamAi,
   WorkerRequestStreamAiResponseErrorCode,
-  WorkerResponseStreamAi,
 } from '~/type/worker-message'
-import MarkdownContent from '~/components/MarkdownContent.vue'
+import { type MessageItem, ReceiveStatus } from '~/components/ChatPanel/types'
 
 const currentInstance = getCurrentInstance()!
 
+const messageList = ref<MessageItem[]>([])
 const prompt = ref('')
 const aiResponse = ref('')
 const askLoading = ref(false)
-const hasError = ref(false)
 const sessionId = ref('')
 const chatCanceller = ref<null | (() => any)>(null)
+
+async function initNewSession() {
+  await chatCanceller.value?.()
+  sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId())
+  aiResponse.value = ''
+  askLoading.value = false
+}
 async function askAi() {
   if (askLoading.value) {
     currentInstance.proxy.$message({
@@ -35,18 +41,24 @@ async function askAi() {
   }
 
   askLoading.value = true
-  hasError.value = false
 
-  if (!sessionId.value) {
-    try {
-      sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId())
-    }
-    catch {
-      askLoading.value = false
-      return
-    }
+  const askMessage: MessageItem = {
+    insertedBy: 'user',
+    content: prompt.value.trim(),
+    modifiedTime: new Date(),
+    createdTime: new Date(),
+    receiveStatus: ReceiveStatus.FINISHED,
   }
+  messageList.value.push(askMessage)
 
+  const respondingMessage: MessageItem = {
+    insertedBy: 'robot',
+    content: '',
+    modifiedTime: new Date(),
+    createdTime: new Date(),
+    receiveStatus: ReceiveStatus.INITIALIZING,
+  }
+  messageList.value.push(respondingMessage)
   try {
     askLoading.value = true
     const { promise, cancel } = sendToStreamResponsePort(
@@ -57,9 +69,11 @@ async function askAi() {
       {
         streamHandler(message) {
           if (message.payload.index === 0)
-            aiResponse.value = ''
+            respondingMessage.content = ''
 
-          aiResponse.value += message.payload.text
+          respondingMessage.content += message.payload.text
+          respondingMessage.modifiedTime = new Date()
+          respondingMessage.receiveStatus = ReceiveStatus.PENDING
         },
         resolvePredict(message) {
           return (message.payload.index === -1) && message.payload.errorCode === WorkerRequestStreamAiResponseErrorCode.NO_ERROR
@@ -73,9 +87,14 @@ async function askAi() {
     await promise
   }
   catch (e) {
-    hasError.value = true
+    if (e.message === 'CANCELLED')
+      respondingMessage.receiveStatus = ReceiveStatus.CANCELLED
+    else
+      respondingMessage.receiveStatus = ReceiveStatus.ERROR
   }
   finally {
+    respondingMessage.modifiedTime = new Date()
+
     askLoading.value = false
     chatCanceller.value = null
   }
@@ -86,10 +105,16 @@ const presetQueries = [
   `1000 words novel`,
   `Should I choose Android Phone or iPhone?`,
 ]
+
+initNewSession()
 </script>
 
 <template>
   <div>
+    <MessageList :message-list="messageList" />
+    <ElButton @click="initNewSession">
+      新会话
+    </ElButton>
     <form @submit.prevent="askAi">
       <ElInput v-model="prompt" type="textarea" />
       <div>
@@ -116,12 +141,6 @@ const presetQueries = [
         </a>
       </div>
     </form>
-    <div class="ai-content">
-      <MarkdownContent :content="aiResponse" />
-    </div>
-    <template v-if="hasError">
-      &nbsp;&nbsp;<i class="el-icon-error color-red" />
-    </template>
   </div>
 </template>
 

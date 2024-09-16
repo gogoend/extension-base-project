@@ -154,7 +154,7 @@ export function sendToStreamResponsePort<
     promise: responseDefer.promise,
     cancel: async () => {
       port.postMessage(new WorkerStopStreamPort())
-      responseDefer.reject('CANCELLED')
+      responseDefer.reject(new Error('CANCELLED'))
     },
   }
 }
