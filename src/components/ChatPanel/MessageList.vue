@@ -48,6 +48,20 @@ defineProps({
 .message-list {
   display: flex;
   flex-direction: column;
+  padding-inline-end: 10px;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb {
+    width: 8px;
+    background-color: rgb(233, 232, 232);
+    border-radius: 9999px;
+  }
   .message-item {
     max-width: calc(100% - 32px);
     width: fit-content;
