@@ -54,18 +54,16 @@ type TargetContext =
 
 // #region 以各消息messageType属性为key，映射各消息
 // 1. 提取 WorkerMessage 命名空间下所有类的类型并组合成联合类型
-type WorkerMessageUnion = typeof WorkerMessage[keyof typeof WorkerMessage]
+type WorkerMessageNamespaceImportUnion = typeof WorkerMessage[keyof typeof WorkerMessage]
 // 2. 引入的类型比较混杂，且引入的是按值推断的类型（引入的类型构造函数，而不是接口），因此按照能否构造过滤出所有构造函数
-type OnlyWithConstructors<T> = T extends new (...args: any[]) => any ? T : never
-type MessagesWithConstructors = OnlyWithConstructors<WorkerMessageUnion>
+type WorkerMessageNamespaceImportOnlyConstructorUnion = Extract<WorkerMessageNamespaceImportUnion, (new (...args: any[]) => any)>
 // 3. 取一下构造函数实例的类型
-type MessagesInstanceType = InstanceType<MessagesWithConstructors>
+type WorkerMessageNamespaceImportInstanceTypeUnion = InstanceType<WorkerMessageNamespaceImportOnlyConstructorUnion>
 // 4. 过滤出基于WorkerBaseMessage的类型，并把这些类型组合为联合类型
-type FilteredMessages<T> = T extends WorkerMessage.WorkerBaseMessage ? T : never
-type WorkMessageTypeUnion = FilteredMessages<MessagesInstanceType>
-// 5. 创建出映射类型，key为messageType属性为key，value为各自对应的消息
+type WorkerMessageTypeUnion = Extract<WorkerMessageNamespaceImportInstanceTypeUnion, WorkerMessage.WorkerBaseMessage>
+// 5. 创建映射类型 - key为messageType属性为key，value为各自对应的消息
 type MessageTypeMap = {
-  [M in WorkMessageTypeUnion as M['messageType']]: M
+  [M in WorkerMessageTypeUnion as M['messageType']]: M
 }
 // #endregion
 
