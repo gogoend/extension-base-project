@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
 import MessageList from './MessageList.vue'
+import SuggestCard from './SuggestCard/index.vue'
 import { sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
 import {
   WorkerRequestAiSessionId,
@@ -20,11 +21,12 @@ const chatCanceller = ref<null | (() => any)>(null)
 
 async function initNewSession() {
   await chatCanceller.value?.()
+  messageList.value = []
   sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId())
   aiResponse.value = ''
   askLoading.value = false
 }
-async function askAi() {
+function handleSendClick() {
   if (askLoading.value) {
     currentInstance.proxy.$message({
       type: 'warning',
@@ -39,12 +41,33 @@ async function askAi() {
     })
     return
   }
-
+  const p = askAi(prompt.value)
+  prompt.value = ''
+  return p
+}
+async function handleSendQuery(content: string) {
+  if (askLoading.value) {
+    currentInstance.proxy.$message({
+      type: 'warning',
+      message: 'AI正在回答哦',
+    })
+    return
+  }
+  if (!content.trim()) {
+    currentInstance.proxy.$message({
+      type: 'warning',
+      message: '请输入文本~',
+    })
+    return
+  }
+  return askAi(content)
+}
+async function askAi(content: string) {
   askLoading.value = true
 
   const askMessage: MessageItem = {
     insertedBy: 'user',
-    content: prompt.value.trim(),
+    content: content.trim(),
     modifiedTime: new Date(),
     createdTime: new Date(),
     receiveStatus: ReceiveStatus.FINISHED,
@@ -64,7 +87,7 @@ async function askAi() {
     const { promise, cancel } = sendToStreamResponsePort(
       new WorkerRequestStreamAi({
         sessionId: sessionId.value,
-        prompt: prompt.value,
+        prompt: content.trim(),
       }),
       {
         streamHandler(message) {
@@ -100,61 +123,49 @@ async function askAi() {
   }
 }
 
-const presetQueries = [
-  `Different between Google and Baidu`,
-  `1000 words novel`,
-  `Should I choose Android Phone or iPhone?`,
-]
-
 initNewSession()
 </script>
 
 <template>
-  <div>
-    <MessageList :message-list="messageList" />
+  <div class="chat-panel">
+    <MessageList v-if="messageList.length" class="chat-panel__message-list" :message-list="messageList" />
+    <SuggestCard v-else class="chat-panel__suggest-list" @send-query="handleSendQuery" />
     <ElButton @click="initNewSession">
       新会话
     </ElButton>
-    <form @submit.prevent="askAi">
+    <form class="submit-area" @submit.prevent="handleSendClick">
       <ElInput v-model="prompt" type="textarea" />
       <div>
-        <ElButton type="primary" :loading="askLoading" @click="askAi">
+        <ElButton type="primary" :loading="askLoading" @click="handleSendClick">
           问Ai
         </ElButton>
         <ElButton :disabled="!chatCanceller" @click="chatCanceller?.()">
           停止回答
         </ElButton>
       </div>
-      <div class="suggest-list">
-        <a
-          v-for="(it, index) in presetQueries"
-          :key="index"
-          class="suggest-item"
-          :loading="askLoading"
-          href="javascript:void(0);"
-          @click="() => {
-            prompt = it
-            askAi()
-          }"
-        >
-          {{ it }}
-        </a>
-      </div>
     </form>
   </div>
 </template>
 
 <style lang="css" scoped>
-.suggest-list {
+.chat-panel {
+  width: 100%;
+  height: 100%;
   display: flex;
-  gap: 8px;
-  .suggest-item {
-    padding: 8px 16px;
-    background-color: #f4f4f4;
-    border-radius: 9999px;
-    &:hover {
-      text-decoration: underline;
-    }
+  flex-direction: column;
+  align-items: flex-start;
+  .chat-panel__message-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    width: 100%;
+  }
+  .chat-panel__suggest-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    width: 100%;
+  }
+  .submit-area {
+    width: 100%;
   }
 }
 </style>

@@ -43,16 +43,16 @@ export async function getManifest() {
       'offscreen',
     ],
     host_permissions: ['*://*/*'],
-    // content_scripts: [
-    //   {
-    //     matches: [
-    //       '<all_urls>',
-    //     ],
-    //     js: [
-    //       'dist/contentScripts/index.global.js',
-    //     ],
-    //   },
-    // ],
+    content_scripts: [
+      {
+        matches: [
+          '<all_urls>',
+        ],
+        js: [
+          'dist/contentScripts/index.global.js',
+        ],
+      },
+    ],
     web_accessible_resources: [
       {
         resources: ['dist/contentScripts/style.css'],

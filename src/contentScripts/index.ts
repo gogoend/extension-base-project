@@ -1,1 +1,3 @@
+import './sidepanel-bridge'
+
 export {}
