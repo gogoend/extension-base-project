@@ -103,7 +103,24 @@ export function getConnectName(tag: string, id: string) {
 export function parseConnectName(name: string) {
   return name.split('@') as [string, string]
 }
-export function sendToStreamResponsePort(message, { resolvePredict, rejectPredict, streamHandler } = {}) {
+interface StreamMessageHandler<T> {
+  (message: T): void
+}
+export function sendToStreamResponsePort<
+  T extends WorkerMessage.WorkerBaseMessage,
+  U = MessagingResponseTypeMap[T['messageType']],
+>(
+  message: T,
+  {
+    resolvePredict,
+    rejectPredict,
+    streamHandler,
+  }: {
+    rejectPredict?: StreamMessageHandler<U>
+    resolvePredict?: StreamMessageHandler<U>
+    streamHandler?: StreamMessageHandler<U>
+  } = {},
+) {
   const port = browser.runtime.connect({ name: getConnectName(message.messageType, uuid()) })
   port.postMessage(
     message,
@@ -112,7 +129,7 @@ export function sendToStreamResponsePort(message, { resolvePredict, rejectPredic
   responseDefer.promise.finally(() => port.disconnect())
   port.onMessage.addListener((message) => {
     if (rejectPredict?.(message)) {
-      rejectPredict.reject(message)
+      responseDefer.reject(message)
       return
     }
     if (resolvePredict?.(message)) {
@@ -124,7 +141,10 @@ export function sendToStreamResponsePort(message, { resolvePredict, rejectPredic
 
   return responseDefer.promise
 }
-export function handleStreamResponsePort(tag, handler) {
+export function handleStreamResponsePort<T extends keyof MessagingResponseTypeMap>(
+  tag: T,
+  handler: (message: MessageTypeMap[T], port: Browser.Runtime.Port) => void,
+) {
   browser.runtime.onConnect.addListener((port) => {
     const [portName, connectId] = parseConnectName(port.name)
     if (portName !== tag || !connectId)

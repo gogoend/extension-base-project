@@ -107,7 +107,7 @@ export class WorkerRequestStreamAi extends WorkerBaseMessage {
 }
 declare global {
   interface MessagingResponseTypeMap {
-    [WorkerRequestStreamAi.tag]: void
+    [WorkerRequestStreamAi.tag]: WorkerResponseStreamAi
   }
 }
 
@@ -139,7 +139,7 @@ export class WorkerRequestAiSessionId extends WorkerBaseMessage {
 }
 declare global {
   interface MessagingResponseTypeMap {
-    [WorkerRequestAiSessionId.tag]: void
+    [WorkerRequestAiSessionId.tag]: string
   }
 }
 
