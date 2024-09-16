@@ -3,28 +3,33 @@ import { v4 as uuid } from 'uuid'
 import type Browser from 'webextension-polyfill'
 import * as WorkerMessage from '~/type/worker-message'
 
-export function sendToBackground<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<MessagingResponseTypeMap[T['messageType']]> {
+type ResponseForMessage<T extends WorkerMessage.WorkerBaseMessage> =
+  T['messageType'] extends keyof MessagingResponseTypeMap
+    ? MessagingResponseTypeMap[T['messageType']]
+    : any
+
+export function sendToBackground<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<ResponseForMessage<T>> {
   return browser.runtime.sendMessage({
     target: 'background',
     message,
   })
 }
 
-export function sendToPopup<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<MessagingResponseTypeMap[T['messageType']]> {
+export function sendToPopup<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<ResponseForMessage<T>> {
   return browser.runtime.sendMessage({
     target: 'popup',
     message,
   })
 }
 
-export function sendToSidepanel<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<MessagingResponseTypeMap[T['messageType']]> {
+export function sendToSidepanel<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<ResponseForMessage<T>> {
   return browser.runtime.sendMessage({
     target: 'sidepanel',
     message,
   })
 }
 
-export async function sendToOffscreen<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<MessagingResponseTypeMap[T['messageType']]> {
+export async function sendToOffscreen<T extends (WorkerMessage.WorkerBaseMessage)>(message: T): Promise<ResponseForMessage<T>> {
   await sendToBackground(new WorkerMessage.EnsureOffscreen())
   return browser.runtime.sendMessage({
     target: 'offscreen',
@@ -32,7 +37,7 @@ export async function sendToOffscreen<T extends (WorkerMessage.WorkerBaseMessage
   })
 }
 
-export function sendToTabById<T extends (WorkerMessage.WorkerBaseMessage)>(tabId: number, message: T): Promise<MessagingResponseTypeMap[T['messageType']]> {
+export function sendToTabById<T extends (WorkerMessage.WorkerBaseMessage)>(tabId: number, message: T): Promise<ResponseForMessage<T>> {
   return browser.tabs.sendMessage(tabId, { message, target: 'tab' })
 }
 
@@ -70,18 +75,18 @@ type MessageTypeMap = {
 export function handleMessageFactory(
   targetContext: TargetContext,
 ) {
-  return function handleMessage<T extends keyof MessagingResponseTypeMap>(
+  return function handleMessage<T extends string>(
     tag: T,
     handler: (
       message: {
-        message: MessageTypeMap[T]
+        message: T extends keyof MessagingResponseTypeMap ? MessageTypeMap[T] : any
         target: TargetContext
       },
       sender: Browser.Runtime.MessageSender
-    ) => any,
+    ) => T extends keyof MessagingResponseTypeMap ? (MessagingResponseTypeMap[T] | Promise<MessagingResponseTypeMap[T]>) : any,
   ) {
     const innerHandler = (message: {
-      message: MessageTypeMap[T]
+      message: T extends keyof MessagingResponseTypeMap ? MessageTypeMap[T] : any
       target: TargetContext
     }, sender: Browser.Runtime.MessageSender) => {
       if (
@@ -108,7 +113,7 @@ interface StreamMessageHandler<T> {
 }
 export function sendToStreamResponsePort<
   T extends WorkerMessage.WorkerBaseMessage,
-  U = MessagingResponseTypeMap[T['messageType']],
+  U = ResponseForMessage<T>,
 >(
   message: T,
   {

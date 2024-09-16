@@ -2,7 +2,7 @@ import type { AxiosPromise, AxiosRequestConfig } from 'axios'
 import type Browser from 'webextension-polyfill'
 
 export abstract class WorkerBaseMessage {
-  public abstract messageType: keyof MessagingResponseTypeMap
+  public abstract messageType: string
 }
 
 /**
@@ -14,7 +14,7 @@ export class WorkerAliveDetectMessage extends WorkerBaseMessage {
 }
 declare global {
   interface MessagingResponseTypeMap {
-    [WorkerAliveDetectMessage.tag]: void
+    [WorkerAliveDetectMessage.tag]: true
   }
 }
 
@@ -24,11 +24,6 @@ declare global {
 export class ContentScriptAliveDetectMessage extends WorkerBaseMessage {
   static tag = 'ContentScriptAliveDetectMessage' as const
   public readonly messageType = 'ContentScriptAliveDetectMessage'
-}
-declare global {
-  interface MessagingResponseTypeMap {
-    [ContentScriptAliveDetectMessage.tag]: void
-  }
 }
 
 /**
@@ -63,13 +58,13 @@ declare global {
 export class WorkerUpdateLocalStorage extends WorkerBaseMessage {
   static tag = 'WorkerUpdateLocalStorage' as const
   public readonly messageType = 'WorkerUpdateLocalStorage'
-  public constructor(public payload: any) {
+  public constructor(public payload: Record<string, any>) {
     super()
   }
 }
 declare global {
   interface MessagingResponseTypeMap {
-    [WorkerUpdateLocalStorage.tag]: unknown
+    [WorkerUpdateLocalStorage.tag]: boolean
   }
 }
 
@@ -78,11 +73,6 @@ export class WorkerLocalStorageChanged extends WorkerBaseMessage {
   public readonly messageType = 'WorkerLocalStorageChanged'
   public constructor(public payload: Browser.Storage.StorageAreaOnChangedChangesType) {
     super()
-  }
-}
-declare global {
-  interface MessagingResponseTypeMap {
-    [WorkerLocalStorageChanged.tag]: void
   }
 }
 
@@ -124,11 +114,6 @@ export class WorkerResponseStreamAi extends WorkerBaseMessage {
     super()
   }
 }
-declare global {
-  interface MessagingResponseTypeMap {
-    [WorkerResponseStreamAi.tag]: void
-  }
-}
 
 export class WorkerRequestAiSessionId extends WorkerBaseMessage {
   static tag = 'WorkerRequestAiSessionId' as const
@@ -155,20 +140,10 @@ export class SidepanelUpdateContextByPageContent extends WorkerBaseMessage {
     super()
   }
 }
-declare global {
-  interface MessagingResponseTypeMap {
-    [SidepanelUpdateContextByPageContent.tag]: void
-  }
-}
 
 export class EnsureOffscreen extends WorkerBaseMessage {
   static tag = 'EnsureOffscreen' as const
   public readonly messageType = 'EnsureOffscreen'
-}
-declare global {
-  interface MessagingResponseTypeMap {
-    [EnsureOffscreen.tag]: void
-  }
 }
 export interface BackgroundRelayOffscreenMessageToSenderPayload<T = WorkerResponseStreamAi> {
   sender: Browser.Runtime.MessageSender
