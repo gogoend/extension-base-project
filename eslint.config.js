@@ -10,4 +10,7 @@ module.exports = antfu({
     },
     vueVersion: 2,
   },
+  rules: {
+    'vue/custom-event-name-casing': 'off',
+  },
 })
