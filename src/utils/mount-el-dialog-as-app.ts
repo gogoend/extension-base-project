@@ -21,6 +21,7 @@ interface DialogData {
     [key: string]: Function | Function[]
   }
   uniqueElId: string
+  mountInContentScript: boolean
 }
 
 export default function mountElDialogAsApp(
@@ -28,8 +29,8 @@ export default function mountElDialogAsApp(
   option: Partial<DialogData>,
 ) {
   // #region 对话框组件定义
-  option = reactive({ data: {}, on: {}, uniqueElId: 'close-confirm-dialog' })
-  const { data = {}, on = {}, uniqueElId } = option
+  option = reactive({ data: {}, on: {}, uniqueElId: 'close-confirm-dialog', mountInContentScript: false })
+  const { data = {}, on = {}, uniqueElId, mountInContentScript } = option
 
   if (uniqueElId !== undefined && pendingPromise[uniqueElId] instanceof Promise)
     return pendingPromise[uniqueElId]
@@ -42,7 +43,23 @@ export default function mountElDialogAsApp(
       kill: existEl.__kill__,
     })
   }
-  const p = getShadow().then((shadow) => {
+
+  let p1
+  if (mountInContentScript) {
+    p1 = getShadow()
+  }
+  else {
+    p1 = Promise.resolve({
+      root: document.documentElement,
+      container: (() => {
+        const el = document.createElement('span')
+        document.documentElement.append(el)
+        return el
+      })(),
+    })
+  }
+
+  const p2 = p1.then((shadow) => {
     uniqueElId !== undefined && delete pendingPromise[uniqueElId]
     const root = shadow.root
     const container = shadow.container as ElWithDisposer
@@ -108,7 +125,11 @@ export default function mountElDialogAsApp(
     })
 
     const el = document.createElement('div')
-    root.appendChild(el)
+    if (mountInContentScript)
+      root.appendChild(el)
+    else
+      container.appendChild(el)
+
     app!.$mount(el)
     data.visible = true
     return {
@@ -120,6 +141,6 @@ export default function mountElDialogAsApp(
     uniqueElId !== undefined && delete pendingPromise[uniqueElId]
   })
 
-  uniqueElId !== undefined && (pendingPromise[uniqueElId] = p)
-  return p
+  uniqueElId !== undefined && (pendingPromise[uniqueElId] = p2)
+  return p2
 }
