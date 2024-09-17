@@ -1,8 +1,9 @@
 /// <reference types="vitest" />
 
 import { dirname, relative } from 'node:path'
+import process from 'node:process'
 import type { UserConfig } from 'vite'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import Vue from '@vitejs/plugin-vue2'
 import Icons from 'unplugin-icons/vite'
 import IconsResolver from 'unplugin-icons/resolver'
@@ -13,7 +14,9 @@ import Replace from 'unplugin-replace/vite'
 import { isDev, port, r } from './scripts/utils'
 import packageJson from './package.json'
 
-export const sharedConfig: UserConfig = {
+process.env = { ...process.env, ...loadEnv(process.env.NODE_ENV!, process.cwd()) }
+
+export const sharedConfig: UserConfig = ({
   root: r('src'),
   resolve: {
     alias: {
@@ -70,6 +73,21 @@ export const sharedConfig: UserConfig = {
         },
       ],
     }),
+    Replace({
+      delimiters: ['', ''],
+      sourcemap: true,
+      include: ['**/src/background/utils/gtag.ts'],
+      values: [
+        {
+          find: /<measurement_id>/g,
+          replacement: process.env.VITE_APP_GTAG_MEASUREMENT_ID as string,
+        },
+        {
+          find: /<api_secret>/g,
+          replacement: process.env.VITE_APP_GTAG_API_SECRET as string,
+        },
+      ],
+    }),
 
     // rewrite assets to use relative path
     {
@@ -91,40 +109,44 @@ export const sharedConfig: UserConfig = {
       'vue-demi',
     ],
   },
-}
+})
 
-export default defineConfig(({ command }) => ({
-  ...sharedConfig,
-  base: command === 'serve' ? `http://localhost:${port}/` : '/dist/',
-  server: {
-    port,
-    hmr: {
-      host: 'localhost',
+export default defineConfig(({ command }) => {
+  return ({
+    ...sharedConfig,
+    base: command === 'serve' ? `http://localhost:${port}/` : '/dist/',
+    server: {
+      port,
+      hmr: {
+        host: 'localhost',
+      },
+      origin: `http://localhost:${port}`,
     },
-    origin: `http://localhost:${port}`,
-  },
-  build: {
-    watch: isDev
-      ? {}
-      : undefined,
-    outDir: r('extension/dist'),
-    emptyOutDir: false,
-    sourcemap: isDev ? 'inline' : false,
-    // https://developer.chrome.com/docs/webstore/program_policies/#:~:text=Code%20Readability%20Requirements
-    terserOptions: {
-      mangle: false,
-    },
-    rollupOptions: {
-      input: {
-        options: r('src/options/index.html'),
-        popup: r('src/popup/index.html'),
-        sidepanel: r('src/sidepanel/index.html'),
-        offscreen: r('src/offscreen/index.html'),
+    build: {
+      watch: isDev
+        ? {}
+        : undefined,
+      outDir: r('extension/dist'),
+      emptyOutDir: false,
+      sourcemap: isDev ? 'inline' : false,
+      // https://developer.chrome.com/docs/webstore/program_policies/#:~:text=Code%20Readability%20Requirements
+      terserOptions: {
+        mangle: false,
+      },
+      rollupOptions: {
+        input: {
+          options: r('src/options/index.html'),
+          popup: r('src/popup/index.html'),
+          sidepanel: r('src/sidepanel/index.html'),
+          offscreen: r('src/offscreen/index.html'),
+        },
       },
     },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-  },
-}))
+    test: {
+      globals: true,
+      environment: 'jsdom',
+    },
+  })
+},
+
+)
