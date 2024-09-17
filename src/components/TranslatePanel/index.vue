@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button as ElButton, Divider as ElDivider, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
-import { computed, getCurrentInstance, ref } from 'vue'
+import Vue, { computed, getCurrentInstance, ref } from 'vue'
 import { sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
 import {
   WorkerRequestAiSessionId,
@@ -34,6 +34,15 @@ const promptForTranslate = computed(() => {
   return `Translate the following text to: ${selectedLang.value}.\n\n${query.value?.trim() ?? ''}`
 })
 const resultContainerEl = ref<HTMLElement>()
+function scrollTranslateResultToBottom() {
+  if (resultContainerEl.value) {
+    const scrollEl = resultContainerEl.value
+    scrollEl.scrollTo({
+      top: scrollEl.scrollHeight - scrollEl.clientTop,
+      behavior: 'smooth',
+    })
+  }
+}
 async function requestTranslate() {
   if (!selectedLang.value) {
     currentInstance.proxy.$message({
@@ -83,13 +92,7 @@ async function requestTranslate() {
             aiResponse.value = ''
 
           aiResponse.value += message.payload.text
-          if (resultContainerEl.value) {
-            const scrollEl = resultContainerEl.value
-            scrollEl.scrollTo({
-              top: scrollEl.scrollHeight - scrollEl.clientTop,
-              behavior: 'smooth',
-            })
-          }
+          scrollTranslateResultToBottom()
         },
         resolvePredict(message) {
           return (message.payload.index === -1) && message.payload.errorCode === WorkerRequestStreamAiResponseErrorCode.NO_ERROR
@@ -112,6 +115,9 @@ async function requestTranslate() {
     askLoading.value = false
     chatCanceller.value = null
   }
+  Vue.nextTick(
+    scrollTranslateResultToBottom,
+  )
 }
 
 function handCopyClicked() {
@@ -129,6 +135,7 @@ function handCopyClicked() {
       <ElInput v-model="query" placeholder="键入您要翻译的文本" type="textarea" />
     </form>
     <div class="divider-content">
+      目标语言：
       <ElSelect v-model="selectedLang" placeholder="目标语言" size="mini" class="flex-1">
         <ElOption
           v-for="lang in langList"
@@ -193,6 +200,7 @@ function handCopyClicked() {
     display: flex;
     height: 100%;
     flex-direction: column;
+    overflow-y: hidden;
     .translate-result {
       flex: 1;
       overflow-y: auto;
