@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { PropType } from 'vue'
+import { Button as ElButton } from 'element-ui'
 import { ReceiveStatus } from './types'
 import type { MessageItem } from './types'
+import { copyStr } from '~/utils/clipboard'
 
 defineProps({
   messageList: {
@@ -9,24 +11,41 @@ defineProps({
     default: () => [],
   },
 })
+
+function handCopyClicked(message: MessageItem) {
+  copyStr(message.content)
+}
 </script>
 
 <template>
   <div class="message-list">
     <div
-      v-for="(item, index) in messageList" :key="index" class="message-item" :class="[
-        `inserted-by-${item.insertedBy}`,
-      ]"
+      v-for="(item, index) in messageList" :key="index" class="message-item__wrap"
     >
-      <template v-if="item.receiveStatus === ReceiveStatus.INITIALIZING">
-        <i class="el-icon-loading" />
-      </template>
-      <template v-else>
-        <MarkdownContent :content="item.content" />
-        <template v-if="item.receiveStatus === ReceiveStatus.ERROR">
-          <i class="el-icon-error color-red" />
+      <div
+        class="message-item" :class="[
+          `inserted-by-${item.insertedBy}`,
+        ]"
+      >
+        <template v-if="item.receiveStatus === ReceiveStatus.INITIALIZING">
+          <i class="el-icon-loading" />
         </template>
-      </template>
+        <template v-else>
+          <MarkdownContent :content="item.content" />
+          <template v-if="item.receiveStatus === ReceiveStatus.ERROR">
+            <i class="el-icon-error color-red" />
+          </template>
+        </template>
+      </div>
+      <div
+        class="message-bottom-operations" :class="[
+          `inserted-by-${item.insertedBy}`,
+        ]"
+      >
+        <ElButton v-if="item.receiveStatus === ReceiveStatus.FINISHED" type="text" @click="handCopyClicked(item)">
+          <i class="el-icon-copy-document" />
+        </ElButton>
+      </div>
     </div>
   </div>
 </template>
@@ -62,21 +81,41 @@ defineProps({
     background-color: rgb(233, 232, 232);
     border-radius: 9999px;
   }
-  .message-item {
-    max-width: calc(100% - 32px);
-    width: fit-content;
-    padding: 10px 16px;
-    margin-bottom: 24px;
-    &.inserted-by-user {
-      background-color: #f0f0f0;
-      align-self: flex-end;
+  .message-item__wrap {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 28px;
+    position: relative;
+    .message-item {
+      max-width: calc(100% - 32px);
+      width: fit-content;
+      padding: 10px 16px;
+      &.inserted-by-user {
+        background-color: #f0f0f0;
+        align-self: flex-end;
+      }
+      &.inserted-by-system {
+        align-self: center;
+      }
+      &.inserted-by-robot {
+        background-color: #cefeff;
+        align-self: flex-start;
+      }
     }
-    &.inserted-by-system {
-      align-self: center;
-    }
-    &.inserted-by-robot {
-      background-color: #cefeff;
-      align-self: flex-start;
+    .message-bottom-operations {
+      height: 0;
+      overflow: visible;
+      position: relative;
+      top: 6px;
+      .el-button--text {
+        padding: 0
+      }
+      &.inserted-by-user {
+        align-self: flex-end;
+      }
+      &.inserted-by-robot {
+        align-self: flex-start;
+      }
     }
   }
 }

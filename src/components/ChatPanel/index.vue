@@ -126,6 +126,7 @@ async function askAi(content: string) {
     )
     chatCanceller.value = cancel
     await promise
+    respondingMessage.receiveStatus = ReceiveStatus.FINISHED
   }
   catch (e) {
     if (e.message === 'CANCELLED')
