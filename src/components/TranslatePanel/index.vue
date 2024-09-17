@@ -33,6 +33,7 @@ const selectedLang = ref(langList[0])
 const promptForTranslate = computed(() => {
   return `Translate the following text to: ${selectedLang.value}.\n\n${query.value?.trim() ?? ''}`
 })
+const resultContainerEl = ref<HTMLElement>()
 async function requestTranslate() {
   if (!selectedLang.value) {
     currentInstance.proxy.$message({
@@ -82,6 +83,13 @@ async function requestTranslate() {
             aiResponse.value = ''
 
           aiResponse.value += message.payload.text
+          if (resultContainerEl.value) {
+            const scrollEl = resultContainerEl.value
+            scrollEl.scrollTo({
+              top: scrollEl.scrollHeight - scrollEl.clientTop,
+              behavior: 'smooth',
+            })
+          }
         },
         resolvePredict(message) {
           return (message.payload.index === -1) && message.payload.errorCode === WorkerRequestStreamAiResponseErrorCode.NO_ERROR
@@ -136,7 +144,7 @@ async function requestTranslate() {
         &nbsp;
       </span>
     </div>
-    <div class="ai-content">
+    <div ref="resultContainerEl" class="ai-content">
       {{ aiResponse }}
     </div>
   </div>

@@ -62,6 +62,9 @@ async function handleSendQuery(content: string) {
   }
   return askAi(content)
 }
+
+const messageListRef = ref<InstanceType<typeof MessageList>>()
+
 async function askAi(content: string) {
   askLoading.value = true
 
@@ -97,6 +100,13 @@ async function askAi(content: string) {
           respondingMessage.content += message.payload.text
           respondingMessage.modifiedTime = new Date()
           respondingMessage.receiveStatus = ReceiveStatus.PENDING
+          if (messageListRef.value?.$el) {
+            const scrollEl = messageListRef.value?.$el
+            scrollEl.scrollTo({
+              top: scrollEl.scrollHeight - scrollEl.clientTop,
+              behavior: 'smooth',
+            })
+          }
         },
         resolvePredict(message) {
           return (message.payload.index === -1) && message.payload.errorCode === WorkerRequestStreamAiResponseErrorCode.NO_ERROR
@@ -130,7 +140,7 @@ const isInputFocusing = ref(false)
 
 <template>
   <div class="chat-panel">
-    <MessageList v-if="messageList.length" class="chat-panel__message-list" :message-list="messageList" />
+    <MessageList v-if="messageList.length" ref="messageListRef" class="chat-panel__message-list" :message-list="messageList" />
     <SuggestCard v-else class="chat-panel__suggest-list" @send-query="handleSendQuery" />
     <div class="toolbar">
       <ElButton size="mini" type="text" :disabled="!messageList.length" @click="initNewSession">
