@@ -22,5 +22,11 @@ export async function createSession(options?) {
 
 export function destroySession(sessionId: string) {
   const session = sessionMapById[sessionId]
-  session?.destroy()
+  try {
+    session?.destroy()
+  }
+  catch (err) {
+    console.error('会话销毁失败', err)
+  }
+  delete sessionMapById[session]
 }

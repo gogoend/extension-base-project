@@ -118,7 +118,7 @@ export class WorkerResponseStreamAi extends WorkerBaseMessage {
 export class WorkerRequestAiSessionId extends WorkerBaseMessage {
   static tag = 'WorkerRequestAiSessionId' as const
   public readonly messageType = 'WorkerRequestAiSessionId'
-  public constructor() {
+  public constructor(public payload: { oldSessionId?: string }) {
     super()
   }
 }

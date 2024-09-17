@@ -43,6 +43,7 @@ function scrollTranslateResultToBottom() {
     })
   }
 }
+const sessionId = ref<string | null>(null)
 async function requestTranslate() {
   if (!selectedLang.value) {
     currentInstance.proxy.$message({
@@ -70,9 +71,8 @@ async function requestTranslate() {
   hasError.value = false
   aiResponse.value = ''
 
-  let sessionId
   try {
-    sessionId = await sendToOffscreen(new WorkerRequestAiSessionId())
+    sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId({ oldSessionId: sessionId.value ?? undefined }))
   }
   catch {
     askLoading.value = false
@@ -83,7 +83,7 @@ async function requestTranslate() {
     askLoading.value = true
     const { promise, cancel } = sendToStreamResponsePort(
       new WorkerRequestStreamAi({
-        sessionId,
+        sessionId: sessionId.value,
         prompt: promptForTranslate.value,
       }),
       {

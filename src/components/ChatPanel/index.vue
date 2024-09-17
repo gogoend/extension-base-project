@@ -17,13 +17,13 @@ const messageList = ref<MessageItem[]>([])
 const prompt = ref('')
 const aiResponse = ref('')
 const askLoading = ref(false)
-const sessionId = ref('')
+const sessionId = ref<null | string>(null)
 const chatCanceller = ref<null | (() => any)>(null)
 
 async function initNewSession() {
   await chatCanceller.value?.()
   messageList.value = []
-  sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId())
+  sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId({ oldSessionId: sessionId.value ?? undefined }))
   aiResponse.value = ''
   askLoading.value = false
 }
@@ -102,7 +102,7 @@ async function askAi(content: string) {
     askLoading.value = true
     const { promise, cancel } = sendToStreamResponsePort(
       new WorkerRequestStreamAi({
-        sessionId: sessionId.value,
+        sessionId: sessionId.value!,
         prompt: content.trim(),
       }),
       {

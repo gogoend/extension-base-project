@@ -1,10 +1,15 @@
 import { WorkerStopStreamPort, handleStreamResponsePort, parseConnectName } from '../utils/messaging'
 import { startupPromptStream, stopPromptStream } from './ai-connection-manager'
-import { createSession } from './ai-session-manager'
+import { createSession, destroySession } from './ai-session-manager'
 import { handleMessageFactory } from '~/utils/messaging'
 import { WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi } from '~/type/worker-message'
 
-handleMessageFactory('offscreen')(WorkerRequestAiSessionId.tag, async () => {
+handleMessageFactory('offscreen')(WorkerRequestAiSessionId.tag, async ({ message }) => {
+  if (
+    message.payload.oldSessionId
+  )
+    destroySession(message.payload.oldSessionId)
+
   return (await createSession()).id
 })
 
