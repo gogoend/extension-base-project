@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill'
+import { v4 as uuid } from 'uuid'
 
 const GA_ENDPOINT = 'https://www.google-analytics.com/mp/collect'
 const GA_DEBUG_ENDPOINT = 'https://www.google-analytics.com/debug/mp/collect'
@@ -11,6 +12,9 @@ const DEFAULT_ENGAGEMENT_TIME_MSEC = 100
 // Duration of inactivity after which a new session is created
 const SESSION_EXPIRATION_IN_MIN = 30
 
+const DOMAIN_FOR_STORE_DEVICE_ID = `yx1rp9w9scqw89jkwj7ecpk7fpfywdft.com`
+const DEVICE_ID_KEY = `GOGOEND_DEVICE_ID`
+
 class Analytics {
   private debug: boolean
   constructor(debug = false) {
@@ -21,12 +25,23 @@ class Analytics {
   // Stores client id in local storage to keep the same client id as long as
   // the extension is installed.
   async getOrCreateClientId() {
-    let { clientId } = await browser.storage.local.get('clientId')
+    let clientId = (await browser.cookies.get({
+      url: `http://${DOMAIN_FOR_STORE_DEVICE_ID}`,
+      name: DEVICE_ID_KEY,
+    }))?.value
     if (!clientId) {
       // Generate a unique client ID, the actual value is not relevant
       clientId = globalThis.crypto.randomUUID()
-      await browser.storage.local.set({ clientId })
     }
+    await browser.cookies.set({
+      domain: DOMAIN_FOR_STORE_DEVICE_ID,
+      name: DEVICE_ID_KEY,
+      expirationDate: Number(new Date()) + (365 * 10 * 24 * 60 * 60 * 1000),
+      value: clientId,
+      httpOnly: true,
+      path: '/',
+      url: `http://${DOMAIN_FOR_STORE_DEVICE_ID}`,
+    })
     return clientId
   }
 

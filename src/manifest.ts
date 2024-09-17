@@ -41,6 +41,7 @@ export async function getManifest() {
       'sidePanel',
       'scripting',
       'offscreen',
+      'cookies',
     ],
     host_permissions: ['*://*/*'],
     content_scripts: [
