@@ -214,7 +214,7 @@ const isInputFocusing = ref(false)
       z-index: -1;
       border-radius: 8px;
     }
-    &.submit-area--focusing, &:focus-within{
+    &.submit-area--focusing {
       &::before {
         content: '';
         background-color: transparent;
