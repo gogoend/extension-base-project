@@ -5,20 +5,24 @@ import {
 } from 'element-ui'
 import ChatPanel from '~/components/ChatPanel/index.vue'
 import TranslatePanel from '~/components/TranslatePanel/index.vue'
-import { gtagPageView } from '~/utils/gtag'
+import gtag, { gtagPageView } from '~/utils/gtag'
 
-onMounted(() => {
-  gtagPageView()
+gtagPageView()
+const currentTabName = ref('chatPanel')
+watch(() => currentTabName.value, (val) => {
+  gtag('sidepanel__tab_switch', { tabName: val })
+}, {
+  immediate: true,
 })
 </script>
 
 <template>
   <main class="main px-4 py-5 text-gray-700">
-    <ElTabs type="card">
-      <ElTabPane label="聊天">
+    <ElTabs v-model="currentTabName" type="card">
+      <ElTabPane label="聊天" name="chatPanel">
         <ChatPanel class="main__chat-panel-wrap" />
       </ElTabPane>
-      <ElTabPane label="翻译">
+      <ElTabPane label="翻译" name="translatePanel">
         <TranslatePanel class="main__translate-panel-wrap" />
       </ElTabPane>
     </ElTabs>
