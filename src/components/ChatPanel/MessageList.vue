@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PropType } from 'vue'
-import { Button as ElButton } from 'element-ui'
+import { Button as ElButton, Tooltip as ElTooltip } from 'element-ui'
 import { ReceiveStatus } from './types'
 import type { MessageItem } from './types'
 import { copyStr } from '~/utils/clipboard'
@@ -15,12 +15,17 @@ defineProps({
 function handCopyClicked(message: MessageItem) {
   copyStr(message.content)
 }
+const hoveringMessageIndex = ref<null | number>(null)
 </script>
 
 <template>
   <div class="message-list">
     <div
-      v-for="(item, index) in messageList" :key="index" class="message-item__wrap"
+      v-for="(item, index) in messageList"
+      :key="index"
+      class="message-item__wrap"
+      @mouseenter.self="hoveringMessageIndex = index"
+      @mouseleave.self="hoveringMessageIndex = null"
     >
       <div
         class="message-item" :class="[
@@ -38,13 +43,16 @@ function handCopyClicked(message: MessageItem) {
         </template>
       </div>
       <div
+        v-show="hoveringMessageIndex === index"
         class="message-bottom-operations" :class="[
           `inserted-by-${item.insertedBy}`,
         ]"
       >
-        <ElButton v-if="item.receiveStatus === ReceiveStatus.FINISHED" type="text" @click="handCopyClicked(item)">
-          <i class="el-icon-copy-document" />
-        </ElButton>
+        <ElTooltip v-if="item.receiveStatus === ReceiveStatus.FINISHED" content="复制" placement="top" :enterable="false">
+          <ElButton type="text" @click="handCopyClicked(item)">
+            <i class="el-icon-copy-document" />
+          </ElButton>
+        </ElTooltip>
       </div>
     </div>
   </div>
