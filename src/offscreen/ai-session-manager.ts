@@ -11,7 +11,13 @@ export async function getSession(sessionId: string) {
 }
 
 export async function createSession(options?) {
-  const session = await window.ai.assistant.create(options)
+  let session
+  if (typeof window.ai.createTextSession === 'function')
+    session = await window.ai.createTextSession(options)
+
+  else if (typeof window.ai.assistant.create === 'function')
+    session = await window.ai.assistant.create(options)
+
   const sessionId = uuid()
 
   sessionMapById[sessionId] = session
