@@ -4,6 +4,7 @@ import { Button as ElButton, Tooltip as ElTooltip } from 'element-ui'
 import { ReceiveStatus } from './types'
 import type { MessageItem } from './types'
 import { copyStr } from '~/utils/clipboard'
+import gtag from '~/utils/gtag'
 
 defineProps({
   messageList: {
@@ -14,6 +15,8 @@ defineProps({
 
 const currentInstance = getCurrentInstance()!
 function handCopyClicked(message: MessageItem) {
+  gtag('ai_chat__click_copy_button', { chatSessionId: message.sessionId, messageInsertedBy: message.insertedBy, messageContentLength: message.content.length })
+
   copyStr(message.content)
   currentInstance.proxy.$message({
     type: 'success',

@@ -1,5 +1,4 @@
 import browser from 'webextension-polyfill'
-import { v4 as uuid } from 'uuid'
 
 const GA_ENDPOINT = 'https://www.google-analytics.com/mp/collect'
 const GA_DEBUG_ENDPOINT = 'https://www.google-analytics.com/debug/mp/collect'
@@ -113,25 +112,6 @@ class Analytics {
     catch (e) {
       console.error('Google Analytics request failed with an exception', e)
     }
-  }
-
-  // Fire a page view event.
-  async firePageViewEvent(pageTitle, pageLocation, additionalParams = {}) {
-    return this.fireEvent('page_view', {
-      page_title: pageTitle,
-      page_location: pageLocation,
-      ...additionalParams,
-    })
-  }
-
-  // Fire an error event.
-  async fireErrorEvent(error, additionalParams = {}) {
-    // Note: 'error' is a reserved event name and cannot be used
-    // see https://developers.google.com/analytics/devguides/collection/protocol/ga4/reference?client_type=gtag#reserved_names
-    return this.fireEvent('extension_error', {
-      ...error,
-      ...additionalParams,
-    })
   }
 }
 

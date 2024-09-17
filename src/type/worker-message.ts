@@ -194,10 +194,15 @@ declare global {
     [ContentScriptTabPrev.tag]: any
   }
 }
+
+interface WorkerMessageGtagPingMessagePayload {
+  name: string
+  params?: Record<string, any>
+}
 export class WorkerGtagPingMessage extends WorkerBaseMessage {
   static tag = 'WorkerGtagPingMessage' as const
   public readonly messageType = 'WorkerGtagPingMessage'
-  public constructor(public payload: any) {
+  public constructor(public payload: WorkerMessageGtagPingMessagePayload) {
     super()
   }
 }

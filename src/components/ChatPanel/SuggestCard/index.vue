@@ -2,14 +2,18 @@
 import { computed } from 'vue'
 import { Divider as ElDivider } from 'element-ui'
 import { usePageStore } from '../../../sidepanel/store'
+import { SuggestMessageFrom } from '../types'
 
 const emit = defineEmits(['send-query'])
 const pageStore = usePageStore()
 const suggestQueries = computed(() => pageStore.suggestQueries)
 const pageAbstract = computed(() => pageStore.pageAbstract)
 
-function handleItemClick(query: string) {
-  emit('send-query', query)
+function handleItemClick(content: string, from: SuggestMessageFrom) {
+  emit('send-query', {
+    content,
+    from,
+  })
 }
 </script>
 
@@ -18,7 +22,7 @@ function handleItemClick(query: string) {
     <div class="content-wrap">
       <template v-if="pageAbstract">
         <ElDivider>网页总结</ElDivider>
-        <a class="page-abstract-card" @click.prevent="handleItemClick(`帮我总结：\n${pageAbstract.content}`)">
+        <a class="page-abstract-card" @click.prevent="handleItemClick(`帮我总结：\n${pageAbstract.content}`, SuggestMessageFrom.pageSummary)">
           <div class="left-content icon">
             <el-icon class="el-icon-discover" />
           </div>
@@ -38,7 +42,7 @@ function handleItemClick(query: string) {
           v-for="(it, index) in suggestQueries"
           :key="index"
           class="suggest-item"
-          @click.prevent="handleItemClick(it)"
+          @click.prevent="handleItemClick(it, SuggestMessageFrom.exampleQuery)"
         >
           {{ it }}
         </a>

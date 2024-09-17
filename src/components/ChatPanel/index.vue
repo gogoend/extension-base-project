@@ -11,8 +11,10 @@ import {
   WorkerRequestStreamAi,
   WorkerRequestStreamAiResponseErrorCode,
 } from '~/type/worker-message'
-import { type MessageItem, ReceiveStatus } from '~/components/ChatPanel/types'
+import { ReceiveStatus } from '~/components/ChatPanel/types'
+import type { MessageItem, SuggestMessageFrom } from '~/components/ChatPanel/types'
 import mountElDialogAsApp from '~/utils/mount-el-dialog-as-app'
+import gtag from '~/utils/gtag'
 
 const currentInstance = getCurrentInstance()!
 
@@ -56,6 +58,8 @@ async function initNewSession() {
   }
 }
 function handleSendClick() {
+  gtag('ai_chat__click_send', { chatSessionId: sessionId.value })
+
   if (askLoading.value) {
     currentInstance.proxy.$message({
       type: 'warning',
@@ -74,7 +78,9 @@ function handleSendClick() {
   prompt.value = ''
   return p
 }
-async function handleSendQuery(content: string) {
+async function handleSendQuery({ content, from }: { content: string, from: SuggestMessageFrom }) {
+  gtag('ai_chat__click_recommend', { chatSessionId: sessionId.value, chatFrom: from })
+
   if (askLoading.value) {
     currentInstance.proxy.$message({
       type: 'warning',
@@ -104,6 +110,7 @@ function scrollMessageListElToBottom() {
 }
 async function askAi(content: string) {
   askLoading.value = true
+  gtag('ai_chat__ask_start', { chatSessionId: sessionId.value })
 
   const askMessage: MessageItem = {
     insertedBy: 'user',
@@ -111,6 +118,8 @@ async function askAi(content: string) {
     modifiedTime: new Date(),
     createdTime: new Date(),
     receiveStatus: ReceiveStatus.FINISHED,
+    receivedPayloadIndex: -1,
+    sessionId: sessionId.value!,
   }
   messageList.value.push(askMessage)
 
@@ -120,6 +129,8 @@ async function askAi(content: string) {
     modifiedTime: new Date(),
     createdTime: new Date(),
     receiveStatus: ReceiveStatus.INITIALIZING,
+    receivedPayloadIndex: -1,
+    sessionId: sessionId.value!,
   }
   messageList.value.push(respondingMessage)
   Vue.nextTick(() => {
@@ -137,6 +148,7 @@ async function askAi(content: string) {
         streamHandler(message) {
           if (message.payload.index === 0)
             respondingMessage.content = ''
+          respondingMessage.receivedPayloadIndex = message.payload.index >= 0 ? message.payload.index : respondingMessage.receivedPayloadIndex
 
           respondingMessage.content += message.payload.text
           respondingMessage.modifiedTime = new Date()
@@ -155,12 +167,17 @@ async function askAi(content: string) {
     chatCanceller.value = cancel
     await promise
     respondingMessage.receiveStatus = ReceiveStatus.FINISHED
+    gtag('ai_chat__receive_done', { chatSessionId: sessionId.value, indexAt: respondingMessage.receivedPayloadIndex })
   }
   catch (e) {
-    if (e.message === 'CANCELLED')
+    if (e.message === 'CANCELLED') {
       respondingMessage.receiveStatus = ReceiveStatus.CANCELLED
-    else
+      gtag('ai_chat__receive_cancelled', { chatSessionId: sessionId.value, indexAt: respondingMessage.receivedPayloadIndex })
+    }
+    else {
       respondingMessage.receiveStatus = ReceiveStatus.ERROR
+      gtag('ai_chat__receive_error', { chatSessionId: sessionId.value, indexAt: respondingMessage.receivedPayloadIndex })
+    }
   }
   finally {
     respondingMessage.modifiedTime = new Date()
@@ -180,7 +197,12 @@ const isInputFocusing = ref(false)
     <MessageList v-if="messageList.length" ref="messageListRef" class="chat-panel__message-list" :message-list="messageList" />
     <SuggestCard v-else class="chat-panel__suggest-list" @send-query="handleSendQuery" />
     <div class="toolbar">
-      <ElButton size="mini" type="text" :disabled="!messageList.length" @click="initNewSession">
+      <ElButton
+        size="mini" type="text" :disabled="!messageList.length" @click="() => {
+          gtag('ai_chat__click_new_chat_button')
+          initNewSession()
+        }"
+      >
         <i class="el-icon-brush" /> 新会话
       </ElButton>
     </div>
@@ -191,7 +213,12 @@ const isInputFocusing = ref(false)
           <ElButton v-if="!askLoading" size="mini" type="primary" :loading="askLoading" @click="handleSendClick">
             问Ai
           </ElButton>
-          <ElButton v-else size="mini" @click="chatCanceller?.()">
+          <ElButton
+            v-else size="mini" @click="() => {
+              gtag('ai_chat__click_cancel_button')
+              chatCanceller?.()
+            }"
+          >
             停止
           </ElButton>
         </div>

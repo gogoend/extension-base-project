@@ -5,6 +5,7 @@ import gtag from './utils/gtag'
 import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, ContentScriptTabPrev, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetCurrentTab, WorkerGetLocalStorage, WorkerGtagPingMessage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
 import { broadcastToAllTabs, handleMessageFactory, sendToSidepanel, sendToTabById } from '~/utils/messaging'
+import { gtagPageView } from '~/utils/gtag'
 
 // only on dev mode
 if (import.meta.hot) {
@@ -207,7 +208,9 @@ handleMessageFactory('background')(BackgroundRelayOffscreenMessageToSender.tag, 
 })
 
 handleMessageFactory('background')(WorkerGtagPingMessage.tag, ({ message }) => {
-  gtag.fireEvent('gogoend_debug', {
-    date: message.payload.date,
-  })
+  gtag.fireEvent(message.payload.name, message.payload.params)
+})
+
+setTimeout(() => {
+  gtagPageView('__backgroundServiceWorker__', location.href)
 })
