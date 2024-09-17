@@ -3,6 +3,8 @@ import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElS
 import Vue from 'vue'
 import MessageList from './MessageList.vue'
 import SuggestCard from './SuggestCard/index.vue'
+import GeminiNanoNotAvailableTipDialog from './GeminiNanoNotAvailableTipDialog.vue'
+import GeminiNanoDownloadingTipDialog from './GeminiNanoDownloadingTipDialog.vue'
 import { sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
 import {
   WorkerRequestAiSessionId,
@@ -10,6 +12,7 @@ import {
   WorkerRequestStreamAiResponseErrorCode,
 } from '~/type/worker-message'
 import { type MessageItem, ReceiveStatus } from '~/components/ChatPanel/types'
+import mountElDialogAsApp from '~/utils/mount-el-dialog-as-app'
 
 const currentInstance = getCurrentInstance()!
 
@@ -23,9 +26,34 @@ const chatCanceller = ref<null | (() => any)>(null)
 async function initNewSession() {
   await chatCanceller.value?.()
   messageList.value = []
-  sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId({ oldSessionId: sessionId.value ?? undefined }))
   aiResponse.value = ''
   askLoading.value = false
+  try {
+    sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId({ oldSessionId: sessionId.value ?? undefined }))
+  }
+  catch (err) {
+    if (err instanceof Error) {
+      switch (err.message) {
+        case 'GEMINI_NANO_IS_UNAVAILABLE': {
+          mountElDialogAsApp(GeminiNanoNotAvailableTipDialog, {}).then(({ promise }) => promise).then(() => {
+            initNewSession()
+          })
+          break
+        }
+        case 'GEMINI_NANO_IS_DOWNLOADING': {
+          mountElDialogAsApp(GeminiNanoDownloadingTipDialog, {}).then(() => {
+            initNewSession()
+          })
+          break
+        }
+        default: {
+          mountElDialogAsApp(GeminiNanoNotAvailableTipDialog, {}).then(() => {
+            initNewSession()
+          })
+        }
+      }
+    }
+  }
 }
 function handleSendClick() {
   if (askLoading.value) {
@@ -232,5 +260,12 @@ const isInputFocusing = ref(false)
       top: 2px;
     }
   }
+}
+</style>
+
+<style lang="css">
+.el-message-box.session-init-error-message-box {
+  width: calc(100% - 40px);
+  max-width: 480px;
 }
 </style>

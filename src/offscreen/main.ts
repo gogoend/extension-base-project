@@ -1,8 +1,8 @@
 import { WorkerStopStreamPort, handleStreamResponsePort, parseConnectName } from '../utils/messaging'
 import { startupPromptStream, stopPromptStream } from './ai-connection-manager'
-import { createSession, destroySession } from './ai-session-manager'
+import { activateAiComponentForFirstUse, createSession, destroySession } from './ai-session-manager'
 import { handleMessageFactory } from '~/utils/messaging'
-import { WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi } from '~/type/worker-message'
+import { WorkerActivateAiComponentForFirstUse, WorkerRequestAiSessionId, WorkerRequestStreamAi, WorkerResponseStreamAi } from '~/type/worker-message'
 
 handleMessageFactory('offscreen')(WorkerRequestAiSessionId.tag, async ({ message }) => {
   if (
@@ -11,6 +11,10 @@ handleMessageFactory('offscreen')(WorkerRequestAiSessionId.tag, async ({ message
     destroySession(message.payload.oldSessionId)
 
   return (await createSession()).id
+})
+
+handleMessageFactory('offscreen')(WorkerActivateAiComponentForFirstUse.tag, async () => {
+  return activateAiComponentForFirstUse()
 })
 
 handleStreamResponsePort(WorkerRequestStreamAi.tag, (message, port) => {

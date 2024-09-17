@@ -122,6 +122,10 @@ export class WorkerRequestAiSessionId extends WorkerBaseMessage {
     super()
   }
 }
+export class WorkerActivateAiComponentForFirstUse extends WorkerBaseMessage {
+  static tag = 'WorkerActivateAiComponentForFirstUse' as const
+  public readonly messageType = 'WorkerActivateAiComponentForFirstUse'
+}
 declare global {
   interface MessagingResponseTypeMap {
     [WorkerRequestAiSessionId.tag]: string
