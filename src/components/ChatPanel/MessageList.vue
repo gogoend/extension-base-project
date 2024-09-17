@@ -29,13 +29,14 @@ const hoveringMessageIndex = ref<null | number>(null)
       v-for="(item, index) in messageList"
       :key="index"
       class="message-item__wrap"
+      :class="[
+        `inserted-by-${item.insertedBy}`,
+      ]"
       @mouseenter.self="hoveringMessageIndex = index"
       @mouseleave.self="hoveringMessageIndex = null"
     >
       <div
-        class="message-item" :class="[
-          `inserted-by-${item.insertedBy}`,
-        ]"
+        class="message-item"
       >
         <template v-if="item.receiveStatus === ReceiveStatus.INITIALIZING">
           <i class="el-icon-loading" />
@@ -49,9 +50,7 @@ const hoveringMessageIndex = ref<null | number>(null)
       </div>
       <div
         v-show="hoveringMessageIndex === index"
-        class="message-bottom-operations" :class="[
-          `inserted-by-${item.insertedBy}`,
-        ]"
+        class="message-bottom-operations"
       >
         <ElTooltip v-if="item.receiveStatus === ReceiveStatus.FINISHED" content="复制" placement="top" :enterable="false">
           <ElButton type="text" @click="handCopyClicked(item)">
@@ -99,20 +98,27 @@ const hoveringMessageIndex = ref<null | number>(null)
     flex-direction: column;
     padding-bottom: 28px;
     position: relative;
+    width: fit-content;
+    max-width: calc(100% - 32px);
     .message-item {
-      max-width: calc(100% - 32px);
-      width: fit-content;
+      width: 100%;
       padding: 10px 16px;
-      &.inserted-by-user {
+    }
+    &.inserted-by-user {
+      align-self: flex-end;
+      .message-item {
         background-color: #f0f0f0;
-        align-self: flex-end;
       }
-      &.inserted-by-system {
-        align-self: center;
+    }
+    &.inserted-by-system {
+      align-self: center;
+      .message-item {
       }
-      &.inserted-by-robot {
+    }
+    &.inserted-by-robot {
+      align-self: flex-start;
+      .message-item {
         background-color: #cefeff;
-        align-self: flex-start;
       }
     }
     .message-bottom-operations {
@@ -123,12 +129,12 @@ const hoveringMessageIndex = ref<null | number>(null)
       .el-button--text {
         padding: 0
       }
-      &.inserted-by-user {
-        align-self: flex-end;
-      }
-      &.inserted-by-robot {
-        align-self: flex-start;
-      }
+    }
+    &.inserted-by-user .message-bottom-operations{
+      align-self: flex-end;
+    }
+    &.inserted-by-robot .message-bottom-operations{
+      align-self: flex-start;
     }
   }
 }
