@@ -66,17 +66,17 @@ defineProps({
     max-width: calc(100% - 32px);
     width: fit-content;
     padding: 10px 16px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     &.inserted-by-user {
       background-color: #f0f0f0;
-      align-self: flex-start;
+      align-self: flex-end;
     }
     &.inserted-by-system {
       align-self: center;
     }
     &.inserted-by-robot {
       background-color: #cefeff;
-      align-self: flex-end;
+      align-self: flex-start;
     }
   }
 }

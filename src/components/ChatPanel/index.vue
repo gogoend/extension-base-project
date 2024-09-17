@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
+import Vue from 'vue'
 import MessageList from './MessageList.vue'
 import SuggestCard from './SuggestCard/index.vue'
 import { sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
@@ -64,7 +65,15 @@ async function handleSendQuery(content: string) {
 }
 
 const messageListRef = ref<InstanceType<typeof MessageList>>()
-
+function scrollMessageListElToBottom() {
+  if (messageListRef.value?.$el) {
+    const scrollEl = messageListRef.value?.$el
+    scrollEl.scrollTo({
+      top: scrollEl.scrollHeight - scrollEl.clientTop,
+      behavior: 'smooth',
+    })
+  }
+}
 async function askAi(content: string) {
   askLoading.value = true
 
@@ -85,6 +94,10 @@ async function askAi(content: string) {
     receiveStatus: ReceiveStatus.INITIALIZING,
   }
   messageList.value.push(respondingMessage)
+  Vue.nextTick(() => {
+    scrollMessageListElToBottom()
+  })
+
   try {
     askLoading.value = true
     const { promise, cancel } = sendToStreamResponsePort(
@@ -100,13 +113,8 @@ async function askAi(content: string) {
           respondingMessage.content += message.payload.text
           respondingMessage.modifiedTime = new Date()
           respondingMessage.receiveStatus = ReceiveStatus.PENDING
-          if (messageListRef.value?.$el) {
-            const scrollEl = messageListRef.value?.$el
-            scrollEl.scrollTo({
-              top: scrollEl.scrollHeight - scrollEl.clientTop,
-              behavior: 'smooth',
-            })
-          }
+
+          scrollMessageListElToBottom()
         },
         resolvePredict(message) {
           return (message.payload.index === -1) && message.payload.errorCode === WorkerRequestStreamAiResponseErrorCode.NO_ERROR
