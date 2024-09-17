@@ -4,6 +4,7 @@ import {
   Tabs as ElTabs,
 } from 'element-ui'
 import ChatPanel from '~/components/ChatPanel/index.vue'
+import TranslatePanel from '~/components/TranslatePanel/index.vue'
 </script>
 
 <template>
@@ -13,7 +14,7 @@ import ChatPanel from '~/components/ChatPanel/index.vue'
         <ChatPanel class="main__chat-panel-wrap" />
       </ElTabPane>
       <ElTabPane label="翻译">
-        Hello
+        <TranslatePanel class="main__translate-panel-wrap" />
       </ElTabPane>
     </ElTabs>
   </main>
@@ -26,9 +27,10 @@ main.main {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  .main__translate-panel-wrap,
   .main__chat-panel-wrap {
-    flex: 1 1 auto;
     overflow: auto;
+    height: 100%;
   }
   &::v-deep(.el-tabs) {
     display: flex;
