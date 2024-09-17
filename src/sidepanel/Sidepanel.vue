@@ -5,6 +5,14 @@ import {
 } from 'element-ui'
 import ChatPanel from '~/components/ChatPanel/index.vue'
 import TranslatePanel from '~/components/TranslatePanel/index.vue'
+import { WorkerGtagPingMessage } from '~/type/worker-message'
+import { sendToBackground } from '~/utils/messaging'
+
+onMounted(() => {
+  sendToBackground(new WorkerGtagPingMessage({
+    date: Number(new Date()),
+  }))
+})
 </script>
 
 <template>

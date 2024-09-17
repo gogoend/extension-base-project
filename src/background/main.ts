@@ -1,7 +1,8 @@
 import type { Tabs } from 'webextension-polyfill'
 import uaParser from 'ua-parser-js'
 import { requestForHandleContentScript } from './utils/request'
-import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, ContentScriptTabPrev, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetCurrentTab, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
+import gtag from './utils/gtag'
+import { BackgroundRelayOffscreenMessageToSender, ContentScriptAliveDetectMessage, ContentScriptTabPrev, EnsureOffscreen, WorkerAliveDetectMessage, WorkerGetCurrentTab, WorkerGetLocalStorage, WorkerGtagPingMessage, WorkerLocalStorageChanged, WorkerRequestAiSessionId, WorkerRequestMessage, WorkerRequestStreamAi, WorkerResponseStreamAi, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
 import { broadcastToAllTabs, handleMessageFactory, sendToSidepanel, sendToTabById } from '~/utils/messaging'
 
@@ -203,4 +204,10 @@ handleMessageFactory('background')(BackgroundRelayOffscreenMessageToSender.tag, 
   else {
     sendToSidepanel(message.payload.message)
   }
+})
+
+handleMessageFactory('background')(WorkerGtagPingMessage.tag, ({ message }) => {
+  gtag.fireEvent('gogoend_debug', {
+    date: message.payload.date,
+  })
 })
