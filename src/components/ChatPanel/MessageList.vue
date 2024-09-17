@@ -12,8 +12,13 @@ defineProps({
   },
 })
 
+const currentInstance = getCurrentInstance()!
 function handCopyClicked(message: MessageItem) {
   copyStr(message.content)
+  currentInstance.proxy.$message({
+    type: 'success',
+    message: '复制成功',
+  })
 }
 const hoveringMessageIndex = ref<null | number>(null)
 </script>

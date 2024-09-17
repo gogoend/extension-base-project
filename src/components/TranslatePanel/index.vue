@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { v4 as uuid } from 'uuid'
 import { Button as ElButton, Divider as ElDivider, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
 import { computed, getCurrentInstance, ref } from 'vue'
-import { handleMessageFactory, sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
+import { sendToOffscreen, sendToStreamResponsePort } from '~/utils/messaging'
 import {
   WorkerRequestAiSessionId,
   WorkerRequestStreamAi,
   WorkerRequestStreamAiResponseErrorCode,
 } from '~/type/worker-message'
+import { copyStr } from '~/utils/clipboard'
 
 const currentInstance = getCurrentInstance()!
 
@@ -113,6 +113,14 @@ async function requestTranslate() {
     chatCanceller.value = null
   }
 }
+
+function handCopyClicked() {
+  copyStr(aiResponse.value)
+  currentInstance.proxy.$message({
+    type: 'success',
+    message: '复制成功',
+  })
+}
 </script>
 
 <template>
@@ -144,8 +152,15 @@ async function requestTranslate() {
         &nbsp;
       </span>
     </div>
-    <div ref="resultContainerEl" class="ai-content">
-      {{ aiResponse }}
+    <div class="translate-result-wrap">
+      <div ref="resultContainerEl" class="translate-result">
+        {{ aiResponse }}
+      </div>
+      <div class="translate-operations">
+        <ElButton v-if="askLoading === false && hasError === false && aiResponse?.trim()" size="mini" @click="handCopyClicked()">
+          <i class="el-icon-copy-document" /> 复制
+        </ElButton>
+      </div>
     </div>
   </div>
 </template>
@@ -174,16 +189,24 @@ async function requestTranslate() {
       white-space: nowrap;
     }
   }
-  .ai-content {
-    overflow-y: auto;
-    white-space: pre-line;
+  .translate-result-wrap {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    .translate-result {
+      flex: 1;
+      overflow-y: auto;
+      white-space: pre-line;
 
-    padding: 5px 15px;
-    line-height: 1.5;
-    box-sizing: border-box;
-    border: 1px solid #DCDFE6;
-    border-radius: 4px;
-    font-size: 14px;
+      padding: 5px 15px;
+      line-height: 1.5;
+      box-sizing: border-box;
+      border: 1px solid #DCDFE6;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .translate-operations {
+    }
   }
 }
 </style>
