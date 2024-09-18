@@ -110,8 +110,6 @@ function scrollMessageListElToBottom() {
 }
 async function askAi(content: string) {
   askLoading.value = true
-  gtag('ai_chat__ask_start', { chatSessionId: sessionId.value })
-
   const askMessage: MessageItem = {
     insertedBy: 'user',
     content: content.trim(),
@@ -121,6 +119,13 @@ async function askAi(content: string) {
     receivedPayloadIndex: -1,
     sessionId: sessionId.value!,
   }
+  gtag('ai_chat__ask_start', {
+    chatSessionId: sessionId.value,
+    queryLength: askMessage.content.length,
+    createdTime: Number(askMessage.createdTime),
+    modifiedTime: Number(askMessage.modifiedTime),
+  })
+
   messageList.value.push(askMessage)
 
   const respondingMessage: MessageItem = {
@@ -154,6 +159,15 @@ async function askAi(content: string) {
           respondingMessage.modifiedTime = new Date()
           respondingMessage.receiveStatus = ReceiveStatus.PENDING
 
+          if (message.payload.index === 0) {
+            gtag('ai_chat__receive_start', {
+              chatSessionId: sessionId.value,
+              segIndexAt: respondingMessage.receivedPayloadIndex,
+              responseLength: respondingMessage.content.length,
+              createdTime: Number(respondingMessage.createdTime),
+              modifiedTime: Number(respondingMessage.modifiedTime),
+            })
+          }
           scrollMessageListElToBottom()
         },
         resolvePredict(message) {
@@ -167,16 +181,34 @@ async function askAi(content: string) {
     chatCanceller.value = cancel
     await promise
     respondingMessage.receiveStatus = ReceiveStatus.FINISHED
-    gtag('ai_chat__receive_done', { chatSessionId: sessionId.value, indexAt: respondingMessage.receivedPayloadIndex })
+    gtag('ai_chat__receive_done', {
+      chatSessionId: sessionId.value,
+      segIndexAt: respondingMessage.receivedPayloadIndex,
+      responseLength: respondingMessage.content.length,
+      createdTime: Number(respondingMessage.createdTime),
+      modifiedTime: Number(respondingMessage.modifiedTime),
+    })
   }
   catch (e) {
     if (e.message === 'CANCELLED') {
       respondingMessage.receiveStatus = ReceiveStatus.CANCELLED
-      gtag('ai_chat__receive_cancelled', { chatSessionId: sessionId.value, indexAt: respondingMessage.receivedPayloadIndex })
+      gtag('ai_chat__receive_cancelled', {
+        chatSessionId: sessionId.value,
+        segIndexAt: respondingMessage.receivedPayloadIndex,
+        responseLength: respondingMessage.content.length,
+        createdTime: Number(respondingMessage.createdTime),
+        modifiedTime: Number(respondingMessage.modifiedTime),
+      })
     }
     else {
       respondingMessage.receiveStatus = ReceiveStatus.ERROR
-      gtag('ai_chat__receive_error', { chatSessionId: sessionId.value, indexAt: respondingMessage.receivedPayloadIndex })
+      gtag('ai_chat__receive_error', {
+        chatSessionId: sessionId.value,
+        segIndexAt: respondingMessage.receivedPayloadIndex,
+        responseLength: respondingMessage.content.length,
+        createdTime: Number(respondingMessage.createdTime),
+        modifiedTime: Number(respondingMessage.modifiedTime),
+      })
     }
   }
   finally {
