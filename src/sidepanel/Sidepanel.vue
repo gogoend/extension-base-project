@@ -11,8 +11,6 @@ gtagPageView()
 const currentTabName = ref('chatPanel')
 watch(() => currentTabName.value, (val) => {
   gtag('sidepanel__tab_switch', { tabName: val })
-}, {
-  immediate: true,
 })
 </script>
 
