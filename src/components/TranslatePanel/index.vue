@@ -8,6 +8,7 @@ import {
   WorkerRequestStreamAiResponseErrorCode,
 } from '~/type/worker-message'
 import { copyStr } from '~/utils/clipboard'
+import gtag from '~/utils/gtag'
 
 const currentInstance = getCurrentInstance()!
 
@@ -15,6 +16,9 @@ const query = ref('')
 const aiResponse = ref('')
 const askLoading = ref(false)
 const hasError = ref(false)
+const createdTime = ref<null | Date>(null)
+const modifiedTime = ref<null | Date>(null)
+const receivedPayloadIndex = ref(-1)
 const chatCanceller = ref<null | (() => any)>(null)
 const langList = [
   'English',
@@ -29,6 +33,12 @@ const langList = [
   'Traditional Chinese',
 ]
 const selectedLang = ref(langList[0])
+
+watch(() => {
+  return selectedLang.value
+}, (val) => {
+  gtag('ai_translate__target_lang_switch', { lang: val })
+})
 
 const promptForTranslate = computed(() => {
   return `Translate the following text to: ${selectedLang.value}.\n\n${query.value?.trim() ?? ''}`
@@ -45,6 +55,7 @@ function scrollTranslateResultToBottom() {
 }
 const sessionId = ref<string | null>(null)
 async function requestTranslate() {
+  gtag('ai_translate__click_translate_button')
   if (!selectedLang.value) {
     currentInstance.proxy.$message({
       type: 'warning',
@@ -60,6 +71,7 @@ async function requestTranslate() {
     return
   }
   if (!query.value.trim()) {
+    gtag('ai_translate__content_validate_error_empty')
     currentInstance.proxy.$message({
       type: 'warning',
       message: '请输入要翻译的文本~',
@@ -70,9 +82,18 @@ async function requestTranslate() {
   askLoading.value = true
   hasError.value = false
   aiResponse.value = ''
+  createdTime.value = new Date()
+  modifiedTime.value = new Date()
+  receivedPayloadIndex.value = -1
 
   try {
     sessionId.value = await sendToOffscreen(new WorkerRequestAiSessionId({ oldSessionId: sessionId.value ?? undefined }))
+    gtag('ai_translate__request_start', {
+      translateSessionId: sessionId.value,
+      createdTime: Number(createdTime.value),
+      modifiedTime: Number(modifiedTime.value),
+      sourceLength: query.value.length,
+    })
   }
   catch {
     askLoading.value = false
@@ -90,9 +111,17 @@ async function requestTranslate() {
         streamHandler(message) {
           if (message.payload.index === 0)
             aiResponse.value = ''
-
+          receivedPayloadIndex.value = message.payload.index >= 0 ? message.payload.index : receivedPayloadIndex.value
           aiResponse.value += message.payload.text
+          modifiedTime.value = new Date()
           scrollTranslateResultToBottom()
+          if (message.payload.index === 0) {
+            gtag('ai_translate__receive_start', {
+              sourceLength: query.value.length,
+              createdTime: Number(createdTime.value),
+              modifiedTime: Number(modifiedTime.value),
+            })
+          }
         },
         resolvePredict(message) {
           return (message.payload.index === -1) && message.payload.errorCode === WorkerRequestStreamAiResponseErrorCode.NO_ERROR
@@ -104,12 +133,34 @@ async function requestTranslate() {
     )
     chatCanceller.value = cancel
     await promise
+    gtag('ai_translate__receive_done', {
+      chatSessionId: sessionId.value,
+      segIndexAt: receivedPayloadIndex.value,
+      responseLength: aiResponse.value.length,
+      createdTime: Number(createdTime.value),
+      modifiedTime: Number(modifiedTime.value),
+    })
   }
   catch (e) {
-    if (e.message === 'CANCELLED')
-      void 0
-    else
+    if (e.message === 'CANCELLED') {
+      gtag('ai_translate__receive_cancelled', {
+        chatSessionId: sessionId.value,
+        segIndexAt: receivedPayloadIndex.value,
+        responseLength: aiResponse.value.length,
+        createdTime: Number(createdTime.value),
+        modifiedTime: Number(modifiedTime.value),
+      })
+    }
+    else {
       hasError.value = true
+      gtag('ai_translate__receive_error', {
+        chatSessionId: sessionId.value,
+        segIndexAt: receivedPayloadIndex.value,
+        responseLength: aiResponse.value.length,
+        createdTime: Number(createdTime.value),
+        modifiedTime: Number(modifiedTime.value),
+      })
+    }
   }
   finally {
     askLoading.value = false
@@ -121,6 +172,7 @@ async function requestTranslate() {
 }
 
 function handCopyClicked() {
+  gtag('ai_translate__click_copy_result_button', { translateSessionId: sessionId.value, resultContentLength: aiResponse.value.length })
   copyStr(aiResponse.value)
   currentInstance.proxy.$message({
     type: 'success',
