@@ -7,8 +7,10 @@ import {
 } from 'element-ui'
 import { getCurrentInstance, ref } from 'vue'
 import PromiseDialog from '../../utils/mount-el-dialog-as-app/PromiseDialog.vue'
+import gtag from '~/utils/gtag'
 
 const promiseDialogRef = ref<InstanceType<typeof PromiseDialog>>()
+gtag('ai_model__downloading_dialog_show')
 </script>
 
 <template>

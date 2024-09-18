@@ -43,13 +43,23 @@ async function initNewSession() {
           break
         }
         case 'GEMINI_NANO_IS_DOWNLOADING': {
-          mountElDialogAsApp(GeminiNanoDownloadingTipDialog, {}).then(() => {
+          mountElDialogAsApp(GeminiNanoDownloadingTipDialog, {}).then(({ promise }) => promise).then(() => {
             initNewSession()
           })
           break
         }
         default: {
-          mountElDialogAsApp(GeminiNanoNotAvailableTipDialog, {}).then(() => {
+          gtag('ai_model__init_error_dialog_show')
+          currentInstance.proxy.$msgbox({
+            title: '😳 有点尴尬……',
+            message: '未知原因，会话初始化失败，重试可能会解决这一问题',
+            confirmButtonText: '重试',
+            showCancelButton: false,
+            showClose: false,
+            closeOnClickModal: false,
+            closeOnPressEscape: false,
+            customClass: 'session-init-error-message-box',
+          }).then(() => {
             initNewSession()
           })
         }

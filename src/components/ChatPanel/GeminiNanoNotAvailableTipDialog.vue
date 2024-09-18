@@ -9,6 +9,7 @@ import { getCurrentInstance, ref } from 'vue'
 import PromiseDialog from '../../utils/mount-el-dialog-as-app/PromiseDialog.vue'
 import { WorkerActivateAiComponentForFirstUse } from '../../type/worker-message'
 import { sendToOffscreen } from '~/utils/messaging'
+import gtag from '~/utils/gtag'
 
 const promiseDialogRef = ref<InstanceType<typeof PromiseDialog>>()
 
@@ -20,6 +21,7 @@ async function activateAiComponentForFirstUse() {
     type: 'success',
   })
 }
+gtag('ai_model__not_available_dialog_show')
 </script>
 
 <template>
