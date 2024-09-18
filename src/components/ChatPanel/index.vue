@@ -61,6 +61,7 @@ function handleSendClick() {
   gtag('ai_chat__click_send', { chatSessionId: sessionId.value })
 
   if (askLoading.value) {
+    gtag('ai_chat__request_startup_error_ai_busy')
     currentInstance.proxy.$message({
       type: 'warning',
       message: 'AI正在回答哦',
@@ -68,6 +69,7 @@ function handleSendClick() {
     return
   }
   if (!prompt.value.trim()) {
+    gtag('ai_chat__content_validate_error_empty')
     currentInstance.proxy.$message({
       type: 'warning',
       message: '请输入文本~',
@@ -82,6 +84,7 @@ async function handleSendQuery({ content, from }: { content: string, from: Sugge
   gtag('ai_chat__click_recommend', { chatSessionId: sessionId.value, chatFrom: from })
 
   if (askLoading.value) {
+    gtag('ai_chat__request_startup_error_ai_busy')
     currentInstance.proxy.$message({
       type: 'warning',
       message: 'AI正在回答哦',
@@ -89,6 +92,7 @@ async function handleSendQuery({ content, from }: { content: string, from: Sugge
     return
   }
   if (!content.trim()) {
+    gtag('ai_chat__content_validate_error_empty')
     currentInstance.proxy.$message({
       type: 'warning',
       message: '请输入文本~',

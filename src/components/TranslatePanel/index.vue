@@ -57,6 +57,7 @@ const sessionId = ref<string | null>(null)
 async function requestTranslate() {
   gtag('ai_translate__click_translate_button')
   if (!selectedLang.value) {
+    gtag('ai_translate__request_startup_error_no_target_lang')
     currentInstance.proxy.$message({
       type: 'warning',
       message: '请先选择一个语言哦~',
@@ -64,6 +65,7 @@ async function requestTranslate() {
     return
   }
   if (askLoading.value) {
+    gtag('ai_translate__request_startup_error_ai_busy')
     currentInstance.proxy.$message({
       type: 'warning',
       message: 'AI正在回答哦',
