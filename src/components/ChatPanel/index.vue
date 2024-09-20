@@ -11,8 +11,8 @@ import {
   WorkerRequestStreamAi,
   WorkerRequestStreamAiResponseErrorCode,
 } from '~/type/worker-message'
-import { ReceiveStatus } from '~/components/ChatPanel/types'
-import type { MessageItem, SuggestMessageFrom } from '~/components/ChatPanel/types'
+import type { MessageItem } from '~/components/ChatPanel/types'
+import { ReceiveStatus, SuggestMessageFrom } from '~/components/ChatPanel/types'
 import mountElDialogAsApp from '~/utils/mount-el-dialog-as-app'
 import gtag from '~/utils/gtag'
 
@@ -91,7 +91,7 @@ function handleSendClick() {
   return p
 }
 async function handleSendQuery({ content, from }: { content: string, from: SuggestMessageFrom }) {
-  gtag('ai_chat__click_recommend', { chatSessionId: sessionId.value, chatFrom: from })
+  gtag('ai_chat__click_recommend', { chatSessionId: sessionId.value, chatFrom: from, exampleQueryContent: from === SuggestMessageFrom.exampleQuery ? content : undefined })
 
   if (askLoading.value) {
     gtag('ai_chat__request_startup_error_ai_busy')
