@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Divider as ElDivider } from 'element-ui'
 import { usePageStore } from '../../../sidepanel/store'
 import { SuggestMessageFrom } from '../types'
+import HeaderContent from '~/components/HeaderContent.vue'
 
 const emit = defineEmits(['send-query'])
 const pageStore = usePageStore()
@@ -20,6 +21,9 @@ function handleItemClick(content: string, from: SuggestMessageFrom) {
 <template>
   <div class="suggest-screen">
     <div class="content-wrap">
+      <div class="header-content-wrap">
+        <HeaderContent />
+      </div>
       <template v-if="pageAbstract">
         <ElDivider>网页总结</ElDivider>
         <a class="page-abstract-card" @click.prevent="handleItemClick(`帮我总结：\n${pageAbstract.content}`, SuggestMessageFrom.pageSummary)">
@@ -60,6 +64,12 @@ function handleItemClick(content: string, from: SuggestMessageFrom) {
   .content-wrap {
     width: 100%;
     max-width: 400px;
+    .header-content-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
     .suggest-list {
       display: flex;
       gap: 8px;
