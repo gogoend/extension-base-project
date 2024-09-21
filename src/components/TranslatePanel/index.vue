@@ -266,6 +266,19 @@ function handCopyClicked() {
       border: 1px solid #DCDFE6;
       border-radius: 4px;
       font-size: 14px;
+      &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      &::-webkit-scrollbar-track {
+        background-color: transparent;
+        border-radius: 9999px;
+      }
+      &::-webkit-scrollbar-thumb {
+        width: 8px;
+        background-color: rgb(233, 232, 232);
+        border-radius: 9999px;
+      }
     }
     .translate-operations {
     }
