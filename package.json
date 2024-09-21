@@ -1,6 +1,6 @@
 {
   "name": "ai-assistant-with-gemini-nano",
-  "displayName": "离线 AI 助手: 由 Gemini Nano 驱动",
+  "displayName": "GOGOEND 离线AI助手: 由 Gemini Nano 驱动",
   "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@8.15.4",
