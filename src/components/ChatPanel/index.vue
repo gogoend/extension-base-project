@@ -222,6 +222,14 @@ async function askAi(content: string) {
         responseLength: respondingMessage.content.length,
         createdTime: Number(respondingMessage.createdTime),
         modifiedTime: Number(respondingMessage.modifiedTime),
+        errorContent: (() => {
+          try {
+            return JSON.stringify(e)
+          }
+          catch {
+            return ''
+          }
+        })(),
       })
     }
   }

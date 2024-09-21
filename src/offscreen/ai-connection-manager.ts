@@ -51,11 +51,20 @@ export async function startupPromptStream(
   }
   catch (error) {
     index = -1
+    let repackedError = error
+    if (error instanceof DOMException || error instanceof Error) {
+      repackedError = {
+        ...error,
+        stack: error.stack,
+        message: error.message,
+        name: error.name,
+      }
+    }
     streamingCallback?.({
       text: '',
       index,
       errorCode: ResponseErrorCode.UNKNOWN_ERROR,
-      errorContent: error,
+      errorContent: repackedError,
     })
   }
   finally {
