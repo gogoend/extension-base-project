@@ -47,7 +47,10 @@ const hoveringMessageIndex = ref<null | number>(null)
         <template v-else>
           <MarkdownContent :content="item.content" />
           <template v-if="item.receiveStatus === ReceiveStatus.ERROR">
-            <i class="el-icon-error color-red" />
+            <i class="el-icon-error color-red" />&nbsp;<span class="color-gray">发生错误</span>
+          </template>
+          <template v-if="item.receiveStatus === ReceiveStatus.CANCELLED">
+            <i class="el-icon-remove color-orange" />&nbsp;<span class="color-gray">已取消</span>
           </template>
         </template>
       </div>
