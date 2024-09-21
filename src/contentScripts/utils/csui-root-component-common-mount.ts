@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import type { Component } from 'vue'
 import Vue from 'vue'
 import { debounce } from 'lodash-es'
@@ -6,7 +5,7 @@ import type Browser from 'webextension-polyfill'
 import { initCsuiStyle } from '../csui-style'
 import { mittBus } from './mittBus'
 
-import { ContentScriptTabPrev, WorkerGetLocalStorage } from '~/type/worker-message'
+import { WorkerGetLocalStorage } from '~/type/worker-message'
 import { handleMessageFactory, sendToBackground } from '~/utils/messaging'
 
 const defaultMountConfig = {
@@ -38,14 +37,6 @@ export async function getShadow(mounter = defaultMountConfig.mounter) {
     container,
   }
 }
-
-// Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
-console.info('[vitesse-webext] Hello world from content script')
-
-// communication example: send previous tab title from background page
-handleMessageFactory('tab')(ContentScriptTabPrev.tag, ({ message }) => {
-  console.log(`[vitesse-webext] Navigate from page "${message.payload.title}"`)
-})
 
 interface MountFuncReturnType {
   container: HTMLElement

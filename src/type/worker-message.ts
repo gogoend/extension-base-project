@@ -166,35 +166,6 @@ declare global {
   }
 }
 
-export class WorkerGetCurrentTab extends WorkerBaseMessage {
-  static tag = 'WorkerGetCurrentTab' as const
-  public readonly messageType = 'WorkerGetCurrentTab'
-  public constructor() {
-    super()
-  }
-}
-declare global {
-  interface MessagingResponseTypeMap {
-    [WorkerGetCurrentTab.tag]: any
-  }
-}
-
-export interface ContentScriptTabPrevPayload {
-  title?: string
-}
-export class ContentScriptTabPrev extends WorkerBaseMessage {
-  static tag = 'ContentScriptTabPrev' as const
-  public readonly messageType = 'ContentScriptTabPrev'
-  public constructor(public payload: ContentScriptTabPrevPayload) {
-    super()
-  }
-}
-declare global {
-  interface MessagingResponseTypeMap {
-    [ContentScriptTabPrev.tag]: any
-  }
-}
-
 interface WorkerMessageGtagPingMessagePayload {
   name: string
   params?: Record<string, any>
