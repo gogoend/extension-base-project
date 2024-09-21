@@ -58,6 +58,7 @@ export async function getManifest() {
         ? `script-src \'self\' http://localhost:${port}; object-src \'self\'`
         : 'script-src \'self\'; object-src \'self\'',
     },
+    minimum_chrome_version: '127',
   }
 
   // add sidepanel
