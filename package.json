@@ -1,10 +1,10 @@
 {
   "name": "ai-assistant-with-gemini-nano",
-  "displayName": "AI助手: Gemini Nano驱动",
+  "displayName": "离线 AI 助手: 由 Gemini Nano 驱动",
   "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@8.15.4",
-  "description": "[description]",
+  "description": "我是一个可以离线使用的AI助手，由 Chrome 自带的 Gemini Nano 模型驱动。常驻在浏览器侧边栏，可以陪你聊天哦~",
   "scripts": {
     "dev": "npm run clear && cross-env NODE_ENV=development run-p dev:*",
     "dev-firefox": "npm run clear && cross-env NODE_ENV=development EXTENSION=firefox run-p dev:*",
