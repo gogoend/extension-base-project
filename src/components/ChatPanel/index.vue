@@ -254,7 +254,7 @@ const isInputFocusing = ref(false)
     </div>
     <form class="submit-area" :class="{ 'submit-area--focusing': isInputFocusing }" @submit.prevent="handleSendClick">
       <div class="main-wrap">
-        <ElInput v-model="prompt" class="query-input" type="textarea" @focus="isInputFocusing = true" @blur="isInputFocusing = false" />
+        <ElInput v-model="prompt" class="query-input" type="textarea" :autosize="{ minRows: 2, maxRows: 4 }" @focus="isInputFocusing = true" @blur="isInputFocusing = false" />
         <div class="operation-button-wrap">
           <ElButton v-if="!askLoading" size="mini" type="primary" :loading="askLoading" @click="handleSendClick">
             问Ai
