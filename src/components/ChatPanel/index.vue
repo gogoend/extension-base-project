@@ -324,13 +324,11 @@ const isInputFocusing = ref(false)
       }
     }
     .main-wrap {
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
-      width: calc(100% - 4px);
-      height: calc(100% - 4px);
       position: relative;
-      left: 2px;
-      top: 2px;
+      border: 2px solid transparent;
+      box-sizing: border-box;
     }
   }
 }
