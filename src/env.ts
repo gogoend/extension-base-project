@@ -12,3 +12,6 @@ export function isForbiddenUrl(url: string): boolean {
 }
 
 export const isFirefox = navigator.userAgent.includes('Firefox')
+
+export const appVersion = '<app-version>'
+export const appBuildHash = '<app-build-hash>'

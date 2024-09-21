@@ -1,5 +1,6 @@
 import { sendToBackground } from '~/utils/messaging'
 import { WorkerGtagPingMessage } from '~/type/worker-message'
+import { appBuildHash, appVersion } from '~/env'
 
 type LowercaseLetter = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
 type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
@@ -17,6 +18,8 @@ function getCommonParams() {
   return {
     context_ua: navigator.userAgent,
     content_href: location.href,
+    app_version: appVersion,
+    app_build_hash: appBuildHash,
     t: Number(new Date()),
   }
 }

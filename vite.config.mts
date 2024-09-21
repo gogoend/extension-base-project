@@ -2,6 +2,7 @@
 
 import { dirname, relative } from 'node:path'
 import process from 'node:process'
+import { execSync } from 'node:child_process'
 import type { UserConfig } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import Vue from '@vitejs/plugin-vue2'
@@ -15,6 +16,7 @@ import { isDev, port, r } from './scripts/utils'
 import packageJson from './package.json'
 
 process.env = { ...process.env, ...loadEnv(process.env.NODE_ENV!, process.cwd()) }
+const currentBuildHash = execSync('git rev-parse HEAD').toString().trim()
 
 export const sharedConfig: UserConfig = ({
   root: r('src'),
@@ -85,6 +87,21 @@ export const sharedConfig: UserConfig = ({
         {
           find: /<api_secret>/g,
           replacement: process.env.VITE_APP_GTAG_API_SECRET as string,
+        },
+      ],
+    }),
+    Replace({
+      delimiters: ['', ''],
+      sourcemap: true,
+      include: ['**/src/env.ts'],
+      values: [
+        {
+          find: /<app-version>/g,
+          replacement: packageJson.version as string,
+        },
+        {
+          find: /<app-build-hash>/g,
+          replacement: currentBuildHash as string,
         },
       ],
     }),
