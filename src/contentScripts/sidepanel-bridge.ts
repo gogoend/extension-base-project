@@ -1,5 +1,5 @@
-import { SidepanelUpdateContextByPageContent } from '../type/worker-message'
-import { sendToSidepanel } from '../utils/messaging'
+import { SidepanelUpdateContextByPageContent } from '~/type/worker-message'
+import { sendToSidepanel } from '~/utils/messaging'
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
