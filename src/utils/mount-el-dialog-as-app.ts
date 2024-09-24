@@ -29,8 +29,7 @@ export default function mountElDialogAsApp(
   option: Partial<DialogData>,
 ) {
   // #region 对话框组件定义
-  option = reactive({ data: {}, on: {}, uniqueElId: 'close-confirm-dialog', mountInContentScript: false })
-  const { data = {}, on = {}, uniqueElId, mountInContentScript } = option
+  const { data = reactive({}), on = reactive({}), uniqueElId, mountInContentScript } = option
 
   if (uniqueElId !== undefined && pendingPromise[uniqueElId] instanceof Promise)
     return pendingPromise[uniqueElId]
