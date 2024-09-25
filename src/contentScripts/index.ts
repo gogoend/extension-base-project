@@ -10,12 +10,14 @@ import ElementUI from 'element-ui'
 import VueDOMPurifyHTML from 'vue-dompurify-html'
 import Vue from 'vue'
 
+import { PiniaVuePlugin } from 'pinia'
 import { bodyLevelElement, initBodyLevelElement } from './body-level-element'
 import { mittBus } from './utils/mittBus'
 import { WorkerLocalStorageChanged } from '~/type/worker-message'
 import { setupApp } from '~/logic/common-setup'
 import { handleMessageFactory } from '~/utils/messaging'
 
+Vue.use(PiniaVuePlugin)
 Vue.use(ElementUI, {
   bodyLevelElement,
 })

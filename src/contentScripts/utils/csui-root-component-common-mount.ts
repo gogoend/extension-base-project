@@ -44,13 +44,10 @@ interface MountFuncReturnType {
   app: any
 }
 
-export async function vue2Mount(RootComponent: any, mountConfig = defaultMountConfig): Promise<MountFuncReturnType> {
+export async function vue2Mount(appFactory: any, mountConfig = defaultMountConfig): Promise<MountFuncReturnType> {
   const { root, container } = await getShadow(mountConfig.mounter)
 
-  const Ctor = Vue.extend(RootComponent)
-  const app = new Vue({
-    render: h => h(Ctor),
-  })
+  const app = appFactory()
 
   try {
     app.$mount(root)
@@ -58,7 +55,14 @@ export async function vue2Mount(RootComponent: any, mountConfig = defaultMountCo
   catch (err) {
     console.error('根组件挂载发生错误', err)
     mittBus.emit('root-mount-error', {
-      component: RootComponent,
+      component: appFactory,
+      error: err instanceof Error
+        ? {
+            name: err.name,
+            message: err.message,
+            stack: err.stack,
+          }
+        : null,
     })
     throw err
   }
