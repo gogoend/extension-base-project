@@ -43,7 +43,7 @@ if (!csHaveRunFlag) {
     await initBodyLevelElement()
     await import('./alive-detect')
     await import('./sidepanel-bridge')
-    await import('./a')
-    await import('./b')
+    await import('./side-chat-entry')
+    await import('./search-engine-entry')
   })()
 }

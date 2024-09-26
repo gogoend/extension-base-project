@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useToggle } from '@vueuse/core'
-import useDragOrMove from '../utils/hooks/useDragOrMove'
+import useDragOrMove from '../../utils/hooks/useDragOrMove'
 import ChatPanel from '~/components/ChatPanel/index.vue'
 import { usePageStore } from '~/sidepanel/store'
 import { handleMessageFactory } from '~/utils/messaging'

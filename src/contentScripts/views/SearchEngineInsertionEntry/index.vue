@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button as ElButton, Input as ElInput, Option as ElOption, Select as ElSelect } from 'element-ui'
-import mountElDialogAsApp from '../../utils/mount-el-dialog-as-app'
-import { sendToBackground } from '../../utils/messaging'
+import mountElDialogAsApp from '../../../utils/mount-el-dialog-as-app'
+import { sendToBackground } from '../../../utils/messaging'
 import CloseConfirm from './components/CloseConfirm.vue'
 import request from '~/contentScripts/utils/request'
 import {

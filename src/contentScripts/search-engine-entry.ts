@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import App from './views/App2.vue'
+import App from './views/SearchEngineInsertionEntry/index.vue'
 import mountSingletonCsui, { mountWithLifeCycle, vue2Mount } from './utils/csui-root-component-common-mount'
 import { pinia } from './store'
 
