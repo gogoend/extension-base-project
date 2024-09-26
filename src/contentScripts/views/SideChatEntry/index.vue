@@ -21,14 +21,26 @@ handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ me
 <template>
   <div ref="elToBeDraggedRef" class="csui-root" :style="{ top: `${position[1]}px` }">
     <div class="z-100 flex items-start font-sans line-height-16px">
-      <Transition name="popup">
+      <Transition
+        name="popup"
+      >
         <div
           v-if="show"
-          class="popup bg-white position-fixed right-0 top-0 bottom-0 text-gray-800 rounded-20px shadow w-max"
-          p="x-40px y-20px"
-          transition="transform duration-300"
+          class="popup flex flex-col bg-white position-fixed right-0 top-0 bottom-0 text-gray-800 rounded-20px shadow w-400px"
+          transition="transform duration-500"
         >
-          <ChatPanel class="main__chat-panel-wrap" />
+          <div class="flex flex-justify-end">
+            <button class="w32px h32px bg-transparent cursor-pointer padding-0 border-0" @click="show = false">
+              <i class="el-icon-close" />
+            </button>
+          </div>
+          <div
+            class="
+              pt0 pb20px pl20px pr20px flex-1 overflow-auto
+            "
+          >
+            <ChatPanel class="main__chat-panel-wrap" />
+          </div>
         </div>
       </Transition>
       <button
@@ -52,10 +64,8 @@ handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ me
 .popup {
   transform: translateX(0);
 }
-.popup-enter-from,
+.popup-enter,
 .popup-leave-to {
-  transform: translateX(-100%);
-}
-button {
+  transform: translateX(100%);
 }
 </style>
