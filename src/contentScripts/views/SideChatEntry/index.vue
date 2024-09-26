@@ -24,10 +24,9 @@ handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ me
       <Transition name="popup">
         <div
           v-if="show"
-          class="popup bg-white text-gray-800 rounded-20px shadow w-max h-min"
+          class="popup bg-white position-fixed right-0 top-0 bottom-0 text-gray-800 rounded-20px shadow w-max"
           p="x-40px y-20px"
-          m="y-auto r-20px"
-          transition="opacity duration-300"
+          transition="transform duration-300"
         >
           <ChatPanel class="main__chat-panel-wrap" />
         </div>
@@ -48,12 +47,14 @@ handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ me
   position: fixed;
   right: 0;
   z-index: 2147483646;
-  cursor: pointer;
   width: fit-content;
+}
+.popup {
+  transform: translateX(0);
 }
 .popup-enter-from,
 .popup-leave-to {
-  opacity: 0;
+  transform: translateX(-100%);
 }
 button {
 }
