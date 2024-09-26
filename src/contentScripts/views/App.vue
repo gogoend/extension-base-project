@@ -19,7 +19,7 @@ handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ me
 </script>
 
 <template>
-  <div ref="elToBeDraggedRef" class="root-wrap" :style="{ top: `${position[1]}px` }">
+  <div ref="elToBeDraggedRef" class="csui-root" :style="{ top: `${position[1]}px` }">
     <div class="z-100 flex items-start font-sans line-height-16px">
       <Transition name="popup">
         <div
@@ -44,7 +44,7 @@ handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ me
 </template>
 
 <style scoped>
-.root-wrap {
+.csui-root {
   position: fixed;
   right: 0;
   z-index: 2147483646;

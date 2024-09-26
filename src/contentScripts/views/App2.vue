@@ -40,7 +40,7 @@ const selectValue = ref(1)
 </script>
 
 <template>
-  <div class="search-engine-insertion">
+  <div class="csui-root search-engine-insertion">
     <ElButton type="text" @click="handleCloseClick">
       关闭
     </ElButton>

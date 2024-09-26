@@ -1,6 +1,7 @@
 .csui-root {
   --csui-text-color: #131414;
-  font-size: 14px;
+  --base-font-size: 14px;
+  font-size: var(--base-font-size);
   line-height: normal;
   color: var(--csui-text-color);
 }
