@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { useToggle } from '@vueuse/core'
 import useDragOrMove from '../utils/hooks/useDragOrMove'
+import ChatPanel from '~/components/ChatPanel/index.vue'
+import { usePageStore } from '~/sidepanel/store'
+import { handleMessageFactory } from '~/utils/messaging'
+import { SidepanelUpdateContextByPageContent } from '~/type/worker-message'
 
 const [show, toggle] = useToggle(false)
 
 const elToBeDraggedRef = ref()
 const position = ref<[number, number]>([0, window.innerHeight * 0.6])
 const { handleMouseDown } = useDragOrMove({ onClick: () => toggle(), elToBeDraggedRef, position })
+
+const pageStore = usePageStore()
+handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ message }) => {
+  pageStore.pageAbstract = message.payload
+})
 </script>
 
 <template>
@@ -20,11 +29,7 @@ const { handleMouseDown } = useDragOrMove({ onClick: () => toggle(), elToBeDragg
           m="y-auto r-20px"
           transition="opacity duration-300"
         >
-          <h1 class="text-16px">
-            Vitesse WebExtee
-          </h1>
-          <SharedSubtitle />
-          <img src="../../assets/google-doodle.png">
+          <ChatPanel class="main__chat-panel-wrap" />
         </div>
       </Transition>
       <button

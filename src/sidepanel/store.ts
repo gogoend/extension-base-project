@@ -13,9 +13,6 @@ export const usePageStore = defineStore('page', () => {
   ])
 
   const pageAbstract = ref(null)
-  handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ message }) => {
-    pageAbstract.value = message.payload
-  })
 
   return {
     suggestQueries,

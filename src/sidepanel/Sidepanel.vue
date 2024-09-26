@@ -3,10 +3,13 @@ import {
   TabPane as ElTabPane,
   Tabs as ElTabs,
 } from 'element-ui'
+import { usePageStore } from './store'
 import ChatPanel from '~/components/ChatPanel/index.vue'
 import TranslatePanel from '~/components/TranslatePanel/index.vue'
 import SvgIconGithub from '~/components/SvgIcon/Github.vue'
 import gtag, { gtagPageView } from '~/utils/gtag'
+import { handleMessageFactory } from '~/utils/messaging'
+import { SidepanelUpdateContextByPageContent } from '~/type/worker-message'
 
 gtagPageView()
 const currentTabName = ref('chatPanel')
@@ -17,6 +20,11 @@ watch(() => currentTabName.value, (val) => {
 function handleGithubButtonClick() {
   gtag('sidepanel__tab_github_entry')
 }
+
+const pageStore = usePageStore()
+handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ message }) => {
+  pageStore.pageAbstract = message.payload
+})
 </script>
 
 <template>
