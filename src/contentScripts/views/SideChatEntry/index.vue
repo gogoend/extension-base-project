@@ -26,7 +26,7 @@ handleMessageFactory('sidepanel')(SidepanelUpdateContextByPageContent.tag, ({ me
       >
         <div
           v-if="show"
-          class="popup flex flex-col bg-white position-fixed right-0 top-0 bottom-0 text-gray-800 rounded-20px shadow w-400px"
+          class="popup flex flex-col bg-white position-fixed right-0 top-0 bottom-0 text-gray-800 rounded-l-20px shadow w-400px"
           transition="transform duration-500"
         >
           <div class="flex flex-justify-end">
