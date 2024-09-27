@@ -244,6 +244,10 @@ async function askAi(content: string) {
 initNewSession()
 
 const isInputFocusing = ref(false)
+
+onBeforeUnmount(() => {
+  currentInstance.proxy.$el.innerHTML = `${currentInstance.proxy.$el.innerHTML}`
+})
 </script>
 
 <template>
