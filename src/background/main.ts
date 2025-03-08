@@ -1,6 +1,7 @@
+/* eslint-disable no-console */
 import { onMessage, sendMessage } from 'webext-bridge/background'
-import type { Tabs } from 'webextension-polyfill'
-import uaParser from 'ua-parser-js'
+import browser, { type Tabs } from 'webextension-polyfill'
+import chrome from 'webextension-polyfill'
 import { requestForHandleContentScript } from './utils/request'
 import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestMessage, WorkerUpdateLocalStorage } from '~/type/worker-message'
 import { isForbiddenUrl } from '~/env'
@@ -13,27 +14,7 @@ if (import.meta.hot) {
   import('./contentScriptHMR')
 }
 
-// remove or turn this off if you don't use side panel
-const USE_SIDE_PANEL = (() => {
-  const ua = uaParser(navigator.userAgent)
-  if (
-    ua.browser.name === 'Chrome' && ua.browser.version?.split('.')[0] && Number(ua.browser.version?.split('.')[0]) >= 116
-  )
-    return true
-
-  return false
-})()
-
-// to toggle the sidepanel with the action button in chromium:
-if (USE_SIDE_PANEL) {
-  // @ts-expect-error missing types
-  browser.sidePanel
-    .setPanelBehavior({ openPanelOnActionClick: true })
-    .catch((error: unknown) => console.error(error))
-}
-
 browser.runtime.onInstalled.addListener((): void => {
-  // eslint-disable-next-line no-console
   console.log('Extension installed')
 })
 
@@ -57,7 +38,6 @@ browser.tabs.onActivated.addListener(async ({ tabId }) => {
     return
   }
 
-  // eslint-disable-next-line no-console
   console.log('previous tab', tab)
   sendMessage(
     'tab-prev',
@@ -162,6 +142,72 @@ browser.tabs.onActivated.addListener(async (tab) => {
         installScript(tab)
         installedTabIdSet.add(tab.tabId)
       }
+    }
+  }
+})
+
+chrome.action.onClicked.addListener((tab) => {
+  if (tab.url.startsWith('http')) {
+    const tabId = tab.id
+    // 附加到目标标签页
+    chrome.debugger.attach({ tabId }, '1.3', () => {
+      // 启用网络拦截
+      chrome.debugger.sendCommand(
+        { tabId },
+        'Network.enable',
+        { maxTotalBufferSize: 10000000, maxResourceBufferSize: 5000000 },
+        () => {
+          if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError)
+          }
+        },
+      )
+      // 设置请求拦截规则（示例：拦截所有请求）
+      chrome.debugger.sendCommand(
+        { tabId },
+        'Network.setRequestInterception',
+        {
+          patterns: [{ urlPattern: '*', resourceType: 'Document' }],
+        },
+      )
+    })
+  }
+  else {
+    console.log('Debugger can only be attached to HTTP/HTTPS pages.')
+  }
+})
+
+chrome.debugger.onEvent.addListener((source, method, params) => {
+  switch (method) {
+    case 'Network.responseReceived': {
+      console.log('Response received:', params.response)
+      // Perform your desired action with the response data
+      break
+    }
+    case 'Network.requestIntercepted': {
+      // 获取拦截的请求信息
+      // 获取响应内容
+      chrome.debugger.sendCommand(
+        { tabId: source.tabId },
+        'Network.getResponseBodyForInterception',
+        { interceptionId: params.interceptionId },
+        (response) => {
+          // 修改响应内容（例如替换文本）
+          const modifiedBody = response?.body?.replace('Original', 'Modified') ?? '123456789'
+          // 继续请求并返回修改后的响应
+          chrome.debugger.sendCommand(
+            { tabId: source.tabId },
+            'Network.continueInterceptedRequest',
+            {
+              interceptionId: params.interceptionId,
+              rawResponse: btoa(
+                `HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n${modifiedBody}`,
+              ),
+            },
+          )
+        },
+      )
+      break
     }
   }
 })
