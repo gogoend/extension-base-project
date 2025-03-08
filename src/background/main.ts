@@ -146,67 +146,79 @@ browser.tabs.onActivated.addListener(async (tab) => {
   }
 })
 
-chrome.action.onClicked.addListener((tab) => {
+function attachInterceptor(tab) {
   if (tab.url.startsWith('http')) {
     const tabId = tab.id
     // 附加到目标标签页
     chrome.debugger.attach({ tabId }, '1.3', () => {
       // 启用网络拦截
-      chrome.debugger.sendCommand(
-        { tabId },
-        'Network.enable',
-        { maxTotalBufferSize: 10000000, maxResourceBufferSize: 5000000 },
-        () => {
-          if (chrome.runtime.lastError) {
-            console.error(chrome.runtime.lastError)
-          }
-        },
-      )
       // 设置请求拦截规则（示例：拦截所有请求）
       chrome.debugger.sendCommand(
         { tabId },
-        'Network.setRequestInterception',
-        {
-          patterns: [{ urlPattern: '*', resourceType: 'Document' }],
-        },
+        'Fetch.enable',
+        {},
       )
     })
   }
   else {
     console.log('Debugger can only be attached to HTTP/HTTPS pages.')
   }
-})
+}
+chrome.action.onClicked.addListener(attachInterceptor)
 
-chrome.debugger.onEvent.addListener((source, method, params) => {
+function utf8ToBase64(str) {
+  // 1. 将字符串转换为 UTF-8 字节数组
+  const encoder = new TextEncoder()
+  const bytes = encoder.encode(str)
+  // 2. 将字节数组转换为二进制字符串
+  let binaryStr = ''
+  for (const byte of bytes) {
+    binaryStr += String.fromCharCode(byte)
+  }
+  // 3. 编码为 Base64
+  return btoa(binaryStr)
+}
+
+chrome.debugger.onEvent.addListener(async (source, method, params) => {
+  const { tabId } = source
   switch (method) {
     case 'Network.responseReceived': {
       console.log('Response received:', params.response)
       // Perform your desired action with the response data
       break
     }
-    case 'Network.requestIntercepted': {
-      // 获取拦截的请求信息
-      // 获取响应内容
-      chrome.debugger.sendCommand(
-        { tabId: source.tabId },
-        'Network.getResponseBodyForInterception',
-        { interceptionId: params.interceptionId },
-        (response) => {
-          // 修改响应内容（例如替换文本）
-          const modifiedBody = response?.body?.replace('Original', 'Modified') ?? '123456789'
-          // 继续请求并返回修改后的响应
-          chrome.debugger.sendCommand(
-            { tabId: source.tabId },
-            'Network.continueInterceptedRequest',
-            {
-              interceptionId: params.interceptionId,
-              rawResponse: btoa(
-                `HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n${modifiedBody}`,
-              ),
-            },
-          )
-        },
-      )
+    case 'Fetch.requestPaused': {
+      console.log(params.request.url)
+      const { requestId } = params
+      // TODO: check if request can be changed.
+      if (true) {
+        // const res = utf8ToBase64(`<h1>123 456 789</h1>`)
+        const res = utf8ToBase64(await (await fetch('https://qq.com')).text())
+
+        // 返回修改后的响应
+        chrome.debugger.sendCommand(
+          { tabId },
+          'Fetch.fulfillRequest',
+          {
+            requestId,
+            responseCode: 200,
+            responseHeaders: [
+              {
+                name: 'Content-Type',
+                value: 'text/html',
+              },
+            ],
+            body: res, // 文本需 Base64 编码
+          },
+        )
+      }
+      else {
+        chrome.debugger.sendCommand(
+          { tabId },
+          'Fetch.continueRequest',
+          { requestId },
+        )
+      }
       break
     }
   }
