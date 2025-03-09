@@ -193,6 +193,75 @@ function utf8ToBase64(str: string) {
   return btoa(binaryStr)
 }
 
+enum MatchStrategy {
+  urlText,
+  urlRegExp,
+  asserterFunction,
+}
+
+enum ModifyWith {
+  notModify,
+  plainText,
+  anotherUrl,
+  contentGeneratorFunction,
+  rawResponseModifierFunction,
+}
+
+interface BaseModifyOption {
+  modifyWith: ModifyWith
+  latency?: number
+}
+
+interface HeaderOption {
+  name: string
+  value: string
+}
+
+interface PlainTextModifyOption extends BaseModifyOption {
+  modifyWith: ModifyWith.plainText
+  responseHeaders: HeaderOption[]
+  content: string
+}
+
+interface AnotherUrlModifyOption extends BaseModifyOption {
+  modifyWith: ModifyWith.anotherUrl
+  url: string
+}
+
+interface ContentGeneratorFunctionModifyOption extends BaseModifyOption {
+  modifyWith: ModifyWith.contentGeneratorFunction
+  contentGeneratorFunctionAsString: string
+}
+
+interface RawResponseModifierFunctionModifyOption extends BaseModifyOption {
+  modifyWith: ModifyWith.rawResponseModifierFunction
+  rawResponseModifierFunctionAsString: string
+}
+
+interface BaseMatchOption {
+  matchStrategy: MatchStrategy
+  modifyOption:
+    | PlainTextModifyOption
+    | AnotherUrlModifyOption
+    | ContentGeneratorFunctionModifyOption
+    | RawResponseModifierFunctionModifyOption
+}
+
+interface UrlTextMatchOption extends BaseMatchOption {
+  matchStrategy: MatchStrategy.urlText
+  url: string
+}
+interface UrlRegExpMatchOption extends BaseMatchOption {
+  matchStrategy: MatchStrategy.urlRegExp
+  urlRegExpAsString: string
+}
+interface AsserterFunctionMatchOption extends BaseMatchOption {
+  matchStrategy: MatchStrategy.asserterFunction
+  assertFunctionAsString: string
+}
+
+const _matcher: Array<UrlTextMatchOption | UrlRegExpMatchOption | AsserterFunctionMatchOption> = []
+
 chrome.debugger.onEvent.addListener(async (source, method, params) => {
   switch (method) {
     case 'Fetch.requestPaused': {
