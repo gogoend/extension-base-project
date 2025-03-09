@@ -149,9 +149,8 @@ browser.tabs.onActivated.addListener(async (tab) => {
 async function attachInterceptor(tab) {
   if (tab.url.startsWith('http')) {
     const tabId = tab.id
-    // 附加到目标标签页
     await chrome.debugger.attach({ tabId }, '1.3')
-    // 启用自动附加到子目标
+    // auto attach to iframe
     await chrome.debugger.sendCommand(
       { tabId },
       'Target.setAutoAttach',
@@ -159,7 +158,7 @@ async function attachInterceptor(tab) {
         autoAttach: true,
         // fix the first level nest iframe cannot be intercepted
         waitForDebuggerOnStart: true,
-        flatten: true, // 使用扁平会话模式
+        flatten: true,
         filter: [{ type: 'iframe', exclude: false }],
       },
     )
@@ -179,16 +178,18 @@ async function attachInterceptor(tab) {
 }
 chrome.action.onClicked.addListener(attachInterceptor)
 
-function utf8ToBase64(str) {
-  // 1. 将字符串转换为 UTF-8 字节数组
+/**
+ * fix string encoding error when call btoa
+ *
+ * `The string to be encoded contains characters outside of the Latin1 range`
+ */
+function utf8ToBase64(str: string) {
   const encoder = new TextEncoder()
   const bytes = encoder.encode(str)
-  // 2. 将字节数组转换为二进制字符串
   let binaryStr = ''
   for (const byte of bytes) {
     binaryStr += String.fromCharCode(byte)
   }
-  // 3. 编码为 Base64
   return btoa(binaryStr)
 }
 
@@ -203,7 +204,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       const { requestId } = params
       // TODO: check if request can be changed.
       if (true) {
-        const res = utf8ToBase64(await (await fetch('https://qq.com')).text())
+        const body = utf8ToBase64(await (await fetch('https://qq.com')).text())
 
         // modify response
         await chrome.debugger.sendCommand(
@@ -218,29 +219,16 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
                 value: 'text/html',
               },
             ],
-            body: res, // 文本需 Base64 编码
+            body, // need encoded to base64
           },
         )
       }
       else {
         await chrome.debugger.sendCommand(
-          { tabId },
+          session,
           'Fetch.continueRequest',
           { requestId },
         )
-      }
-      break
-    }
-    case 'Runtime.executionContextCreated': {
-      console.log('new execution context', params)
-      const context = params.context
-      // 通过辅助数据识别iframe上下文
-      if (context.auxData?.isDefault === false
-        && context.auxData?.type === 'iframe') {
-        console.log('检测到同进程iframe上下文:', {
-          frameId: context.auxData.frameId,
-          url: context.origin,
-        })
       }
       break
     }
