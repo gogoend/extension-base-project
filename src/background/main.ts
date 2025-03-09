@@ -146,19 +146,32 @@ browser.tabs.onActivated.addListener(async (tab) => {
   }
 })
 
-function attachInterceptor(tab) {
+async function attachInterceptor(tab) {
   if (tab.url.startsWith('http')) {
     const tabId = tab.id
     // 附加到目标标签页
-    chrome.debugger.attach({ tabId }, '1.3', () => {
-      // 启用网络拦截
-      // 设置请求拦截规则（示例：拦截所有请求）
-      chrome.debugger.sendCommand(
-        { tabId },
-        'Fetch.enable',
-        {},
-      )
-    })
+    await chrome.debugger.attach({ tabId }, '1.3')
+    // 启用自动附加到子目标
+    await chrome.debugger.sendCommand(
+      { tabId },
+      'Target.setAutoAttach',
+      {
+        autoAttach: true,
+        // fix the first level nest iframe cannot be intercepted
+        waitForDebuggerOnStart: true,
+        flatten: true, // 使用扁平会话模式
+        filter: [{ type: 'iframe', exclude: false }],
+      },
+    )
+    await chrome.debugger.sendCommand(
+      { tabId },
+      'Fetch.enable',
+      {},
+    )
+    await chrome.debugger.sendCommand(
+      { tabId },
+      'Runtime.enable',
+    )
   }
   else {
     console.log('Debugger can only be attached to HTTP/HTTPS pages.')
@@ -180,24 +193,21 @@ function utf8ToBase64(str) {
 }
 
 chrome.debugger.onEvent.addListener(async (source, method, params) => {
-  const { tabId } = source
   switch (method) {
-    case 'Network.responseReceived': {
-      console.log('Response received:', params.response)
-      // Perform your desired action with the response data
-      break
-    }
     case 'Fetch.requestPaused': {
+      const session = {
+        tabId: source.tabId,
+        sessionId: params.sessionId,
+      }
       console.log(params.request.url)
       const { requestId } = params
       // TODO: check if request can be changed.
       if (true) {
-        // const res = utf8ToBase64(`<h1>123 456 789</h1>`)
         const res = utf8ToBase64(await (await fetch('https://qq.com')).text())
 
-        // 返回修改后的响应
-        chrome.debugger.sendCommand(
-          { tabId },
+        // modify response
+        await chrome.debugger.sendCommand(
+          session,
           'Fetch.fulfillRequest',
           {
             requestId,
@@ -213,12 +223,47 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
         )
       }
       else {
-        chrome.debugger.sendCommand(
+        await chrome.debugger.sendCommand(
           { tabId },
           'Fetch.continueRequest',
           { requestId },
         )
       }
+      break
+    }
+    case 'Runtime.executionContextCreated': {
+      console.log('new execution context', params)
+      const context = params.context
+      // 通过辅助数据识别iframe上下文
+      if (context.auxData?.isDefault === false
+        && context.auxData?.type === 'iframe') {
+        console.log('检测到同进程iframe上下文:', {
+          frameId: context.auxData.frameId,
+          url: context.origin,
+        })
+      }
+      break
+    }
+    // handle nest iframe
+    case 'Target.attachedToTarget': {
+      const childSession = {
+        tabId: source.tabId,
+        sessionId: params.sessionId,
+      }
+      await chrome.debugger.sendCommand(
+        childSession,
+        'Fetch.enable',
+        {},
+      )
+      await chrome.debugger.sendCommand(
+        childSession,
+        'Runtime.enable',
+      )
+      // fix the first level nest iframe cannot be intercepted
+      await chrome.debugger.sendCommand(
+        childSession,
+        'Runtime.runIfWaitingForDebugger',
+      )
       break
     }
   }
