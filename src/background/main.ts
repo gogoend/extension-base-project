@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { onMessage, sendMessage } from 'webext-bridge/background'
-import browser, { type Tabs } from 'webextension-polyfill'
+import browser, { Browser, type Tabs } from 'webextension-polyfill'
 import chrome from 'webextension-polyfill'
 import { requestForHandleContentScript } from './utils/request'
 import { ContentScriptAliveDetectMessage, WorkerAliveDetectMessage, WorkerGetLocalStorage, WorkerLocalStorageChanged, WorkerRequestMessage, WorkerUpdateLocalStorage } from '~/type/worker-message'
@@ -183,7 +183,7 @@ chrome.action.onClicked.addListener(attachInterceptor)
  *
  * `The string to be encoded contains characters outside of the Latin1 range`
  */
-function utf8ToBase64(str: string) {
+function stringToBase64(str: string) {
   const encoder = new TextEncoder()
   const bytes = encoder.encode(str)
   let binaryStr = ''
@@ -223,7 +223,7 @@ interface NotModifyModifyOption extends BaseModifyOption {
 
 interface PlainTextModifyOption extends BaseModifyOption {
   modifyWith: ModifyWith.plainText
-  responseHeaders: HeaderOption[]
+  responseHeaders?: HeaderOption[]
   content: string
 }
 
@@ -271,8 +271,34 @@ const rules: Array<UrlTextMatchOption | UrlRegExpMatchOption | AsserterFunctionM
     matchStrategy: MatchStrategy.urlText,
     url: 'https://www.qq.com',
     modifyOption: {
+      modifyWith: ModifyWith.contentGeneratorFunction,
+      contentGeneratorFunctionAsString: (async (...args) => {
+        console.log(...args)
+        debugger
+      }).toString(),
+    },
+  },
+  {
+    matchStrategy: MatchStrategy.urlText,
+    url: 'https://www.qq.com',
+    modifyOption: {
+      modifyWith: ModifyWith.notModify,
+    },
+  },
+  {
+    matchStrategy: MatchStrategy.urlText,
+    url: 'https://www.qq.com',
+    modifyOption: {
       modifyWith: ModifyWith.anotherUrl,
       url: 'https://www.sohu.com',
+    },
+  },
+  {
+    matchStrategy: MatchStrategy.urlText,
+    url: 'https://www.qq.com',
+    modifyOption: {
+      modifyWith: ModifyWith.plainText,
+      content: '<h1>Hello</h1>',
     },
   },
 ]
@@ -311,6 +337,7 @@ function getMatchedRule(request) {
 async function fetchResponse(
   request,
   matchedRule: NonNullable<ReturnType<typeof getMatchedRule>>,
+  dynamicFunctionRunTabId?: number,
 ) {
   const responsePayload = {
     responseCode: 200,
@@ -319,16 +346,115 @@ async function fetchResponse(
   }
 
   switch (matchedRule.modifyOption?.modifyWith) {
+    case ModifyWith.plainText: {
+      responsePayload.body = stringToBase64(matchedRule.modifyOption.content ?? '')
+      responsePayload.responseHeaders = matchedRule.modifyOption.responseHeaders ?? []
+      break
+    }
+    case ModifyWith.contentGeneratorFunction: {
+      debugger
+      async function run() {
+        const result = await chrome.scripting.executeScript({
+          target: { tabId: dynamicFunctionRunTabId },
+          func: async (
+            scriptText,
+            {
+              request,
+              matchedRule,
+            },
+          ) => {
+            try {
+              console.log(scriptText)
+              debugger
+              const f = new Function(scriptText)
+              debugger
+              console.log(f)
+              debugger
+              const result = await f(
+                request,
+                matchedRule,
+              )
+              debugger
+              return result
+            }
+            catch (err) {
+              console.log(err)
+              debugger
+            }
+            // console.log(f, request, matchedRule)
+
+            // const result = await f(
+            //   request,
+            //   matchedRule,
+            // )
+            // console.log(result)
+
+            // return result
+          },
+          args: [
+            matchedRule.modifyOption.contentGeneratorFunctionAsString,
+            {
+              request,
+              matchedRule,
+            },
+          ],
+        })
+
+        return result
+      }
+
+      const {
+        body,
+        responseHeaders,
+        responseCode,
+      } = await run()
+
+      if (typeof body === 'string') {
+        responsePayload.body = stringToBase64(body)
+      }
+      else if (
+        [Blob, File, ArrayBuffer].some(Ctor => body instanceof Ctor)
+      ) {
+        let blob = body
+        if (body instanceof ArrayBuffer) {
+          blob = new Blob([body])
+        }
+        responsePayload.body = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            resolve(reader.result as string ?? '')
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        })
+      }
+      else {
+        try {
+          responsePayload.body = stringToBase64(JSON.stringify(body))
+        }
+        catch {
+          responsePayload.body = stringToBase64('')
+        }
+      }
+      responsePayload.responseHeaders = responseHeaders ?? []
+      responsePayload.responseCode = responseCode ?? 200
+      break
+    }
+    case ModifyWith.anotherUrl:
     case ModifyWith.notModify:
     default: {
-      const response = await fetch(request.url)
+      const response = await fetch(
+        matchedRule.modifyOption?.modifyWith === ModifyWith.anotherUrl
+          ? matchedRule.modifyOption.url
+          : request.url,
+      )
       const headers = [
         ...response.headers,
       ].map(it => ({
         name: it[0],
         value: it[1],
       }))
-      responsePayload.body = utf8ToBase64(await response.text())
+      responsePayload.body = stringToBase64(await response.text())
       responsePayload.responseHeaders = headers
       responsePayload.responseCode = response.status
 
@@ -349,7 +475,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       const matchedRule = getMatchedRule(request)
       if (matchedRule) {
         console.log(request.url)
-        const response = await fetchResponse(request, matchedRule)
+        const response = await fetchResponse(request, matchedRule, source.tabId)
         // modify response
         await chrome.debugger.sendCommand(
           session,
