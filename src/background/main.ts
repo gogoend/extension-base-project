@@ -217,6 +217,10 @@ interface HeaderOption {
   value: string
 }
 
+interface NotModifyModifyOption extends BaseModifyOption {
+  modifyWith: ModifyWith.notModify
+}
+
 interface PlainTextModifyOption extends BaseModifyOption {
   modifyWith: ModifyWith.plainText
   responseHeaders: HeaderOption[]
@@ -241,10 +245,12 @@ interface RawResponseModifierFunctionModifyOption extends BaseModifyOption {
 interface BaseMatchOption {
   matchStrategy: MatchStrategy
   modifyOption:
+    | NotModifyModifyOption
     | PlainTextModifyOption
     | AnotherUrlModifyOption
     | ContentGeneratorFunctionModifyOption
     | RawResponseModifierFunctionModifyOption
+  disabled?: boolean
 }
 
 interface UrlTextMatchOption extends BaseMatchOption {
@@ -260,35 +266,97 @@ interface AsserterFunctionMatchOption extends BaseMatchOption {
   assertFunctionAsString: string
 }
 
-const _matcher: Array<UrlTextMatchOption | UrlRegExpMatchOption | AsserterFunctionMatchOption> = []
+const rules: Array<UrlTextMatchOption | UrlRegExpMatchOption | AsserterFunctionMatchOption> = [
+  {
+    matchStrategy: MatchStrategy.urlText,
+    url: 'https://www.qq.com',
+    modifyOption: {
+      modifyWith: ModifyWith.anotherUrl,
+      url: 'https://www.sohu.com',
+    },
+  },
+]
+
+function getMatchedRule(request) {
+  let targetRule
+  try {
+    targetRule = rules.find((rule) => {
+      switch (rule.matchStrategy) {
+        case MatchStrategy.urlText: {
+          return request.url.includes(rule.url)
+        }
+        case MatchStrategy.urlRegExp: {
+          const regExp = new RegExp(rule.urlRegExpAsString)
+          return regExp.test(request.url)
+        }
+        case MatchStrategy.asserterFunction: {
+          // const f = new Function(rule.assertFunctionAsString)
+          // return f(request)
+          break
+        }
+      }
+      return false
+    })
+    if (targetRule?.disabled) {
+      targetRule = null
+    }
+  }
+  catch (err) {
+    console.warn(`error encountered: getMatchedRule`, err)
+    throw err
+  }
+  return targetRule ?? null
+}
+
+async function fetchResponse(
+  request,
+  matchedRule: NonNullable<ReturnType<typeof getMatchedRule>>,
+) {
+  const responsePayload = {
+    responseCode: 200,
+    responseHeaders: [] as HeaderOption[],
+    body: '',
+  }
+
+  switch (matchedRule.modifyOption?.modifyWith) {
+    case ModifyWith.notModify:
+    default: {
+      const response = await fetch(request.url)
+      const headers = [
+        ...response.headers,
+      ].map(it => ({
+        name: it[0],
+        value: it[1],
+      }))
+      responsePayload.body = utf8ToBase64(await response.text())
+      responsePayload.responseHeaders = headers
+      responsePayload.responseCode = response.status
+
+      break
+    }
+  }
+  return responsePayload
+}
 
 chrome.debugger.onEvent.addListener(async (source, method, params) => {
   switch (method) {
     case 'Fetch.requestPaused': {
+      const { request, requestId } = params
       const session = {
         tabId: source.tabId,
         sessionId: params.sessionId,
       }
-      console.log(params.request.url)
-      const { requestId } = params
-      // TODO: check if request can be changed.
-      if (true) {
-        const body = utf8ToBase64(await (await fetch('https://qq.com')).text())
-
+      const matchedRule = getMatchedRule(request)
+      if (matchedRule) {
+        console.log(request.url)
+        const response = await fetchResponse(request, matchedRule)
         // modify response
         await chrome.debugger.sendCommand(
           session,
           'Fetch.fulfillRequest',
           {
             requestId,
-            responseCode: 200,
-            responseHeaders: [
-              {
-                name: 'Content-Type',
-                value: 'text/html',
-              },
-            ],
-            body, // need encoded to base64
+            ...response,
           },
         )
       }
